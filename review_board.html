@@ -186,6 +186,69 @@
   .crit-card ul{list-style:none;font-size:12px;color:var(--txt-2);line-height:1.9}
   .crit-card ul li::before{content:"›";color:var(--gold);margin-right:8px;font-weight:700}
 
+  /* ========== 录入表单 ========== */
+  .form-zone{
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:32px;
+    position:relative;overflow:hidden;
+  }
+  .form-zone::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--gold),var(--gold-2),var(--up));
+  }
+  .form-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+  .form-head h3{font-family:"Bebas Neue";font-size:24px;letter-spacing:2px}
+  .form-head h3 .cn{font-family:"Noto Sans SC";font-weight:700;font-size:14px;color:var(--gold);letter-spacing:3px;margin-left:10px}
+  .form-head .hint{font-size:11px;color:var(--txt-3);font-family:"JetBrains Mono";letter-spacing:1px}
+  .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.full{grid-column:1/-1}
+  .field.wide{grid-column:span 2}
+  .field label{
+    font-size:10px;color:var(--txt-3);letter-spacing:2px;text-transform:uppercase;
+    font-family:"JetBrains Mono";display:flex;align-items:center;gap:6px;
+  }
+  .field label .req{color:var(--wrong);font-size:10px}
+  .field input,.field select,.field textarea{
+    background:var(--bg-3);border:1px solid var(--line);border-radius:6px;
+    padding:10px 12px;color:var(--txt);font-family:"JetBrains Mono";font-size:13px;
+    transition:border-color .2s,background .2s;outline:none;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{
+    border-color:var(--gold);background:var(--bg-2);
+  }
+  .field textarea{resize:vertical;min-height:60px;font-family:"Noto Sans SC"}
+  .field select{cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23ffb300' fill='none' stroke-width='1.5'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;
+  }
+  .field select option{background:var(--bg-2)}
+  .seg{display:flex;gap:0;background:var(--bg-3);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg label{flex:1;cursor:pointer;padding:10px 8px;text-align:center;font-size:12px;color:var(--txt-2);letter-spacing:1px;transition:all .2s;font-family:"JetBrains Mono";border:none;margin:0}
+  .seg label:not(:last-child){border-right:1px solid var(--line)}
+  .seg input{display:none}
+  .seg input:checked + span{color:var(--bg);background:var(--gold);display:block;margin:-10px -8px;padding:10px 8px;font-weight:700}
+  .seg label span{display:block}
+  .form-actions{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-top:18px;padding-top:18px;border-top:1px dashed var(--line-2);flex-wrap:wrap;
+  }
+  .btn{
+    font-family:"Bebas Neue";font-size:16px;letter-spacing:2px;
+    padding:10px 22px;border:none;border-radius:6px;cursor:pointer;
+    transition:all .2s;display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn.primary{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#000}
+  .btn.primary:hover{box-shadow:0 6px 20px rgba(255,179,0,.4);transform:translateY(-1px)}
+  .btn.ghost{background:transparent;color:var(--txt-2);border:1px solid var(--line-2)}
+  .btn.ghost:hover{color:var(--txt);border-color:var(--txt-2)}
+  .calc-tag{
+    font-family:"JetBrains Mono";font-size:11px;color:var(--neutral);
+    padding:6px 10px;background:rgba(58,138,255,.08);border:1px solid rgba(58,138,255,.2);
+    border-radius:4px;
+  }
+  .calc-tag b{color:var(--gold)}
+
   /* ========== K线图上传 ========== */
   .kline-zone{
     grid-column:1/-1;padding:14px 22px;border-top:1px solid var(--line);
@@ -308,6 +371,111 @@
       <div class="hint">最长 28 天 / 最短 3 天</div>
     </div>
   </div>
+
+  <!-- ========== 录入表单 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">00</span>NEW TRADE<span class="cn">录入交易</span></h2>
+    <span class="tag">手动填写 · 提交后自动生成复盘卡片</span>
+  </div>
+  <form id="tradeForm" class="form-zone" autocomplete="off">
+    <div class="form-grid">
+
+      <div class="field">
+        <label>股票代码 <span class="req">*</span></label>
+        <input type="text" name="ts_code" placeholder="600519.SH" required pattern="\d{6}\.[SH|SZ]">
+      </div>
+      <div class="field">
+        <label>股票名称 <span class="req">*</span></label>
+        <input type="text" name="name" placeholder="贵州茅台" required>
+      </div>
+      <div class="field">
+        <label>交易日期 <span class="req">*</span></label>
+        <input type="date" name="trade_date" required>
+      </div>
+      <div class="field">
+        <label>买卖方向 <span class="req">*</span></label>
+        <div class="seg">
+          <label><input type="radio" name="action" value="BUY" checked><span>BUY 买入</span></label>
+          <label><input type="radio" name="action" value="SELL"><span>SELL 卖出</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>价格（元） <span class="req">*</span></label>
+        <input type="number" name="price" step="0.01" min="0" placeholder="1685.00" required>
+      </div>
+      <div class="field">
+        <label>数量（股） <span class="req">*</span></label>
+        <input type="number" name="quantity" step="100" min="100" placeholder="1000" required>
+      </div>
+      <div class="field">
+        <label>金额（自动计算）</label>
+        <input type="text" name="amount" placeholder="自动计算" readonly>
+      </div>
+      <div class="field">
+        <label>仓位占比（%）</label>
+        <input type="number" name="position" step="1" min="0" max="100" placeholder="30">
+      </div>
+
+      <div class="field">
+        <label>战法信号</label>
+        <select name="signal_type">
+          <option value="">无 / 自由买入</option>
+          <option value="B1">B1 · J值&lt;-10 买点</option>
+          <option value="B2">B2 · 放量突破</option>
+          <option value="B3">B3 · 分歧转一致</option>
+          <option value="SB1">SB1 · 超级B1 震仓</option>
+          <option value="长安战法">长安战法 · 三日确认</option>
+          <option value="S1">S1 · 放量大跌卖出</option>
+          <option value="S2">S2 · 防卖飞预警</option>
+          <option value="S3">S3 · 最后逃生</option>
+          <option value="四块砖">四块砖 · 连4红减半</option>
+          <option value="卤煮">卤煮 · 落袋为安</option>
+          <option value="止损">止损 · 被动离场</option>
+          <option value="卖飞">卖飞 · 卖后大涨</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>J 值</label>
+        <input type="number" name="j_value" step="0.1" placeholder="-12.3">
+      </div>
+      <div class="field">
+        <label>防卖飞评分 /5</label>
+        <input type="number" name="sell_score" step="1" min="0" max="5" placeholder="2">
+      </div>
+      <div class="field">
+        <label>战法评分 /5</label>
+        <input type="number" name="strat_score" step="1" min="0" max="5" placeholder="5">
+      </div>
+
+      <!-- 卖出时显示 -->
+      <div class="field" id="sellOnlyFields" style="display:none">
+        <label>对应买入价（元）</label>
+        <input type="number" name="buy_price" step="0.01" min="0" placeholder="用于计算盈亏">
+      </div>
+      <div class="field" id="sellOnlyFields2" style="display:none">
+        <label>持仓天数</label>
+        <input type="number" name="holding_days" step="1" min="1" placeholder="18">
+      </div>
+      <div class="field wide">
+        <label>交易理由 / 复盘备注</label>
+        <textarea name="reason" placeholder="为什么买/卖？当时的市场判断、心理状态、事后反思..."></textarea>
+      </div>
+      <div class="field wide">
+        <label>K线截图（可选）</label>
+        <input type="file" name="kline_img" accept="image/png,image/jpeg" style="padding:8px">
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <div class="calc-tag" id="liveCalc">金额：<b>—</b>　|　仓位 <b>未填</b></div>
+      <div style="display:flex;gap:10px">
+        <button type="button" class="btn ghost" id="resetBtn">CLEAR 清空</button>
+        <button type="submit" class="btn primary">SUBMIT 提交复盘</button>
+      </div>
+    </div>
+  </form>
 
   <!-- ========== 交易复盘列表 ========== -->
   <div class="sec-head">
@@ -599,6 +767,231 @@
   </div>
 
 </div>
+<script>
+  // ========== 表单交互 ==========
+  const form = document.getElementById('tradeForm');
+  const liveCalc = document.getElementById('liveCalc');
+
+  // 金额 + 仓位实时计算
+  function updateCalc() {
+    const price = parseFloat(form.price.value) || 0;
+    const qty = parseFloat(form.quantity.value) || 0;
+    const pos = form.position.value;
+    const amount = (price * qty).toFixed(2);
+    form.amount.value = amount > 0 ? '¥' + amount : '';
+    liveCalc.innerHTML = `金额：<b>${amount > 0 ? '¥' + amount : '—'}</b>　|　仓位 <b>${pos ? pos + '%' : '未填'}</b>`;
+  }
+  form.price.addEventListener('input', updateCalc);
+  form.quantity.addEventListener('input', updateCalc);
+  form.position.addEventListener('input', updateCalc);
+
+  // 买卖方向切换：卖出时显示盈亏字段
+  form.querySelectorAll('input[name="action"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const isSell = form.action.value === 'SELL';
+      document.getElementById('sellOnlyFields').style.display = isSell ? 'flex' : 'none';
+      document.getElementById('sellOnlyFields2').style.display = isSell ? 'flex' : 'none';
+    });
+  });
+
+  // 清空
+  document.getElementById('resetBtn').addEventListener('click', () => form.reset());
+
+  // Z哥自动点评生成（基于战法 + 评分 + J 值 + 盈亏）
+  function generateZReview(data) {
+    const verdict = data.verdict;
+    const isBuy = data.action === 'BUY';
+    const sig = data.signal_type || '';
+    const j = parseFloat(data.j_value);
+    const stratScore = parseInt(data.strat_score) || 0;
+    const profit = data.profit_pct;
+
+    let head = '', mid = '', quote = '';
+
+    if (verdict === 'correct') {
+      head = `这笔我给你打 <span class="ok">满分</span>。`;
+      if (sig.includes('B1')) mid = `J值 ${j} 进的场，B1 信号确认，<span class="hl">节奏感是对的</span>。`;
+      else if (sig.includes('B2')) mid = `B2 放量突破进的，<span class="ok">进场是对的</span>。`;
+      else if (sig.includes('B3')) mid = `B3 分歧转一致的节点进的，<span class="hl">这就是教科书</span>。`;
+      else mid = `<span class="ok">进场节奏对了</span>。`;
+      if (!isBuy && profit !== null) mid += `${profit >= 0 ? '卤煮 ' + profit.toFixed(1) + '%' : '止损 ' + Math.abs(profit).toFixed(1) + '%'}，没贪、没恋战。`;
+      quote = `"赚钱的交易都是相似的，亏钱的交易各有各的死法。"`;
+    } else if (verdict === 'wrong') {
+      head = `这笔 <span class="strike">典型的死法</span>。`;
+      if (j > 80) mid = `J 值 ${j} 你还往里冲？这不叫 B1，这叫"接飞刀"。<span class="strike">哪来的底气</span>？`;
+      else if (!sig) mid = `没战法信号就进场，<span class="strike">这就是赌博</span>。`;
+      else mid = `<span class="strike">节奏全乱</span>。`;
+      if (data.position && data.position > 40) mid += `仓位直接干到 ${data.position}%，<span class="strike">违反仓位铁律</span>。`;
+      quote = `"市场不缺机会，缺的是管住手。"`;
+    } else {
+      head = `这笔<span class="hl">有待商榷</span>。`;
+      if (!isBuy && profit !== null && profit > 0) {
+        mid = `买点可能对，但<span class="strike">卖点太急</span>。盈利 ${profit.toFixed(1)}% 就跑，<span class="hl">这就是卖飞</span>。`;
+        quote = `"卖飞比亏钱更难受，但管不住手的人，永远只能赚小钱。"`;
+      } else {
+        mid = `节奏和纪律都有<span class="hl">改进空间</span>。`;
+        quote = `"交易这行，靠的不是聪明，是纪律。"`;
+      }
+    }
+    return `${head} ${mid} <span class="quote">${quote}</span>`;
+  }
+
+  // 根据信号 + J 值 + 评分判定 verdict
+  function judgeVerdict(data) {
+    const sig = data.signal_type || '';
+    const j = parseFloat(data.j_value);
+    const stratScore = parseInt(data.strat_score) || 0;
+    const profit = data.profit_pct;
+    const pos = parseFloat(data.position) || 0;
+
+    // 错误：追高（J>80无B1）或重仓（>40%）或止损大亏
+    if ((j > 80 && !sig.includes('S')) || pos > 40 || (!isFinite(profit) && profit < -5)) return 'wrong';
+    // 部分：买对卖早（卖飞）
+    if (data.action === 'SELL' && sig === '卖飞') return 'partial';
+    if (stratScore > 0 && stratScore < 4) return 'partial';
+    // 正确：有战法信号 + 评分≥4
+    if ((sig.startsWith('B') || sig === '长安战法' || sig === 'SB1') && stratScore >= 4) return 'correct';
+    if (data.action === 'SELL' && (sig === 'S1' || sig === 'S2' || sig === 'S3' || sig === '卤煮') && stratScore >= 4) return 'correct';
+    return 'partial';
+  }
+
+  // 战法 pill 样式映射
+  function pillClass(sig) {
+    if (!sig) return '';
+    if (sig.startsWith('B1')) return 'b1';
+    if (sig.startsWith('B2')) return 'b2';
+    if (sig.startsWith('B3') || sig === 'SB1') return 'b3';
+    if (['S1','S2','S3','卤煮','止损','卖飞','四块砖'].includes(sig)) return 'sell';
+    return '';
+  }
+
+  // 提交：生成新交易卡片
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const data = {
+      ts_code: fd.get('ts_code'),
+      name: fd.get('name'),
+      trade_date: fd.get('trade_date'),
+      action: fd.get('action'),
+      price: parseFloat(fd.get('price')),
+      quantity: parseInt(fd.get('quantity')),
+      amount: parseFloat(fd.get('price')) * parseInt(fd.get('quantity')),
+      position: fd.get('position'),
+      signal_type: fd.get('signal_type'),
+      j_value: fd.get('j_value'),
+      sell_score: fd.get('sell_score'),
+      strat_score: fd.get('strat_score'),
+      buy_price: parseFloat(fd.get('buy_price')) || null,
+      holding_days: fd.get('holding_days'),
+      reason: fd.get('reason') || '—',
+      kline_img: fd.get('kline_img'),
+    };
+    if (!data.ts_code || !data.name || !data.price || !data.quantity) {
+      alert('请填写必填项：代码、名称、价格、数量');
+      return;
+    }
+    // 计算盈亏
+    data.profit_pct = (data.action === 'SELL' && data.buy_price) ? ((data.price - data.buy_price) / data.buy_price * 100) : null;
+    data.verdict = judgeVerdict(data);
+    data.verdictText = data.verdict === 'correct' ? 'CORRECT · 教科书' : data.verdict === 'wrong' ? 'WRONG · 追高' : 'PARTIAL · 待商榷';
+
+    // 生成卡片 HTML
+    const trades = document.querySelector('.trades');
+    const card = document.createElement('div');
+    card.className = `trade ${data.verdict}`;
+    const isSell = data.action === 'SELL';
+    const profitHtml = (isSell && data.profit_pct !== null)
+      ? `<span class="lbl">盈亏</span><span class="v ${data.profit_pct >= 0 ? 'up' : 'down'}">${data.profit_pct >= 0 ? '+' : ''}${data.profit_pct.toFixed(1)}%</span>`
+      : '';
+    const holdHtml = data.holding_days ? `<span class="lbl">持仓</span><span class="v">${data.holding_days} 天</span>` : '';
+    const sigPill = data.signal_type ? `<span class="pill ${pillClass(data.signal_type)}">${data.signal_type}</span>` : '<span class="pill">无信号</span>';
+    const jPill = data.j_value ? `<span class="pill">J值 ${data.j_value}</span>` : '';
+    const stratScoreHtml = data.strat_score ? `<span class="lbl">评分</span><span class="v ${data.verdict === 'correct' ? 'up' : data.verdict === 'wrong' ? 'down' : ''}">${data.strat_score}/5</span>` : '';
+    const sellScoreHtml = data.sell_score ? `<span class="lbl">防卖飞</span><span class="v">${data.sell_score}/5</span>` : '';
+    const posHtml = data.position ? `<span class="lbl">仓位</span><span class="v">${data.position}%</span>` : '';
+    const actLabel = isSell ? '卖出 / EXIT' : '买入 / ENTRY';
+    const actType = isSell ? (data.signal_type === '卤煮' ? '卤煮' : data.signal_type === '止损' ? '止损' : data.signal_type === '卖飞' ? '卖飞' : '离场') : '建仓';
+
+    let klineHtml = '';
+    if (data.kline_img && data.kline_img.size > 0) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const kz = card.querySelector('.kline-drop');
+        if (kz) {
+          kz.innerHTML = `
+            <div class="kline-preview">
+              <img src="${e.target.result}" alt="${data.ts_code} K线图">
+              <div class="bar"><span><span class="name">${data.ts_code}</span> · ${data.kline_img.name}</span></div>
+            </div>
+          `;
+        }
+      };
+      reader.readAsDataURL(data.kline_img);
+    }
+    klineHtml = `
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">${data.kline_img && data.kline_img.size > 0 ? '已上传' : '未上传'}</span></div>
+        <div class="kline-drop" style="min-height:60px">
+          <div class="ph"><div class="ic">⬆</div><div>等待上传...</div></div>
+        </div>
+      </div>
+    `;
+
+    card.innerHTML = `
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">${data.ts_code}</span>
+          <span class="name">${data.name}</span>
+          <span class="date">${isSell ? '卖' : '买'} ${data.trade_date}${data.holding_days ? ' → 持仓 ' + data.holding_days + ' 天' : ''}</span>
+        </div>
+        <div class="verdict ${data.verdict}">${data.verdictText}</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">${actLabel}</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥${data.price.toFixed(2)}</span></div>
+          <div class="row"><span class="lbl">数量</span><span class="v">${data.quantity.toLocaleString()} 股</span></div>
+          <div class="row"><span class="lbl">金额</span><span class="v">¥${data.amount.toLocaleString(undefined,{maximumFractionDigits:2})}</span></div>
+          ${posHtml ? `<div class="row">${posHtml}</div>` : ''}
+        </div>
+        <div class="cell">
+          <div class="k">战法信号 / SIGNAL</div>
+          <div class="row">${sigPill}${jPill}</div>
+          ${stratScoreHtml ? `<div class="row">${stratScoreHtml}</div>` : ''}
+          ${sellScoreHtml ? `<div class="row">${sellScoreHtml}</div>` : ''}
+          ${profitHtml ? `<div class="row">${profitHtml}</div>` : ''}
+          ${holdHtml ? `<div class="row">${holdHtml}</div>` : ''}
+        </div>
+        <div class="cell">
+          <div class="k">备注 / NOTE</div>
+          <div style="font-size:12px;color:var(--txt-2);line-height:1.6">${data.reason}</div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">${generateZReview(data)}</div>
+      </div>
+      ${klineHtml}
+    `;
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    trades.insertBefore(card, trades.firstChild);
+    requestAnimationFrame(() => {
+      card.style.transition = 'opacity .4s, transform .4s';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    });
+    // 滚动到新卡片
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    form.reset();
+    updateCalc();
+  });
+</script>
+
 <script>
   // K线图上传交互：点击 + 拖拽 + 预览 + 移除
   document.querySelectorAll('.kline-drop').forEach(zone => {
