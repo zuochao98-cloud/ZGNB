@@ -376,6 +376,98 @@
   }
   .upload-hint b{color:var(--gold)}
 
+  /* 深度复盘按钮 + 详细分析区 */
+  .deep-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    background:linear-gradient(135deg,rgba(255,179,0,.15),rgba(255,138,0,.1));
+    border:1px solid rgba(255,179,0,.4);color:var(--gold);
+    padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;
+    font-family:"JetBrains Mono";letter-spacing:1px;transition:all .2s;
+  }
+  .deep-btn:hover{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#000}
+  .deep-btn.done{color:var(--down);border-color:rgba(0,200,83,.4);background:rgba(0,200,83,.08)}
+  .deep-btn.done:hover{background:rgba(0,200,83,.15);color:var(--down)}
+  .deep-analysis{
+    margin-top:12px;padding:14px 18px;border-radius:8px;
+    background:linear-gradient(135deg,rgba(255,179,0,.05),rgba(0,0,0,.2));
+    border:1px solid rgba(255,179,0,.2);border-left:3px solid var(--gold);
+    font-size:13px;line-height:1.85;color:var(--txt);display:none;
+  }
+  .deep-analysis.show{display:block;animation:fadeIn .4s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .deep-analysis .da-title{
+    font-family:"Bebas Neue";color:var(--gold);font-size:14px;letter-spacing:2px;
+    margin-bottom:10px;display:flex;align-items:center;gap:8px;
+  }
+  .deep-analysis .da-title::before{content:"◆";font-size:10px}
+  .deep-analysis .da-row{margin-bottom:8px;padding-left:14px;position:relative}
+  .deep-analysis .da-row::before{content:"›";position:absolute;left:0;color:var(--gold);font-weight:700}
+  .deep-analysis .da-row b{color:var(--gold)}
+  .deep-analysis .da-row .bad{color:var(--wrong);font-weight:700}
+  .deep-analysis .da-row .good{color:var(--down);font-weight:700}
+  .deep-analysis .da-quote{
+    margin-top:10px;padding:8px 12px;border-left:2px solid var(--gold);
+    background:rgba(255,179,0,.05);color:var(--gold);font-style:italic;font-size:12px;
+  }
+
+  /* 一键深度复盘浮动按钮 */
+  .bulk-deep{
+    position:fixed;right:24px;bottom:24px;z-index:50;
+    background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#000;
+    padding:14px 22px;border-radius:50px;border:none;cursor:pointer;
+    font-family:"Bebas Neue";font-size:16px;letter-spacing:2px;
+    box-shadow:0 8px 28px rgba(255,179,0,.45);transition:all .25s;
+    display:none;align-items:center;gap:8px;
+  }
+  .bulk-deep.show{display:inline-flex;animation:popIn .3s}
+  .bulk-deep:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(255,179,0,.6)}
+  .bulk-deep .count{
+    background:rgba(0,0,0,.25);color:#fff;padding:1px 8px;border-radius:10px;
+    font-size:12px;font-family:"JetBrains Mono";
+  }
+  @keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* 综合评估总结区 */
+  .summary-zone{
+    margin-top:36px;padding:26px 30px;border-radius:14px;
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line-2);position:relative;overflow:hidden;
+  }
+  .summary-zone::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--up),var(--gold),var(--down));
+  }
+  .summary-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+  .summary-head h2{font-family:"Bebas Neue";font-size:28px;letter-spacing:2px}
+  .summary-head h2 .cn{font-family:"Noto Sans SC";font-weight:700;font-size:16px;color:var(--gold);letter-spacing:3px;margin-left:10px}
+  .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .summary-verdict{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;
+  }
+  .sv-card{
+    padding:14px 18px;border-radius:10px;border:1px solid var(--line);
+    background:var(--bg-3);text-align:center;
+  }
+  .sv-card.ok{border-color:rgba(0,200,83,.3);background:rgba(0,200,83,.05)}
+  .sv-card.no{border-color:rgba(255,59,48,.3);background:rgba(255,59,48,.05)}
+  .sv-card.warn{border-color:rgba(255,107,26,.3);background:rgba(255,107,26,.05)}
+  .sv-card .sv-label{font-size:10px;color:var(--txt-3);letter-spacing:2px;font-family:"JetBrains Mono";text-transform:uppercase}
+  .sv-card .sv-value{font-family:"Bebas Neue";font-size:32px;line-height:1.1;margin-top:6px}
+  .sv-card.ok .sv-value{color:var(--down)}
+  .sv-card.no .sv-value{color:var(--up)}
+  .sv-card.warn .sv-value{color:var(--warn)}
+  .summary-zg{
+    padding:18px 22px;border-radius:10px;
+    background:linear-gradient(90deg,rgba(255,179,0,.08),transparent 70%);
+    border-left:3px solid var(--gold);
+  }
+  .summary-zg .zg-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .summary-zg .zg-text{font-size:14px;line-height:1.9;color:var(--txt)}
+  .summary-zg .zg-text b{color:var(--gold)}
+  .summary-zg .zg-text .good{color:var(--down);font-weight:700}
+  .summary-zg .zg-text .bad{color:var(--up);font-weight:700}
+  @media(max-width:900px){.summary-grid{grid-template-columns:repeat(2,1fr)}.summary-verdict{grid-template-columns:1fr}}
+
   /* ========== 黑话词典 ========== */
   .jargon{
     display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;
@@ -889,6 +981,63 @@
     <div class="j-item"><span class="term">白线</span><span class="def">Z哥白线，强势股趋势线</span></div>
     <div class="j-item"><span class="term">大哥线</span><span class="def">知行多空线，主力成本线</span></div>
   </div>
+
+  <!-- ========== 综合评估总结 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">04</span>SUMMARY<span class="cn">综合评估</span></h2>
+    <span class="tag">基于所有交易卡片的动态统计</span>
+  </div>
+  <div class="summary-zone">
+    <div class="summary-grid">
+      <div class="stat" id="sumTotal">
+        <div class="label">总交易笔数</div>
+        <div class="value neutral">—</div>
+        <div class="hint">含完整交易 + 持仓中</div>
+      </div>
+      <div class="stat" id="sumWinrate">
+        <div class="label">综合胜率</div>
+        <div class="value up">—</div>
+        <div class="hint">盈利交易 / 完整交易</div>
+      </div>
+      <div class="stat" id="sumPnl">
+        <div class="label">累计盈亏</div>
+        <div class="value neutral">—</div>
+        <div class="hint">按金额加权</div>
+      </div>
+      <div class="stat" id="sumAvgHold">
+        <div class="label">平均持仓</div>
+        <div class="value neutral">—</div>
+        <div class="hint">仅完整交易</div>
+      </div>
+    </div>
+    <div class="summary-verdict">
+      <div class="sv-card ok">
+        <div class="sv-label">CORRECT 正确</div>
+        <div class="sv-value" id="sumCorrect">0</div>
+      </div>
+      <div class="sv-card no">
+        <div class="sv-label">WRONG 错误</div>
+        <div class="sv-value" id="sumWrong">0</div>
+      </div>
+      <div class="sv-card warn">
+        <div class="sv-label">PARTIAL 待改进</div>
+        <div class="sv-value" id="sumPartial">0</div>
+      </div>
+    </div>
+    <div class="summary-zg" id="sumZgReview">
+      <div class="zg-head">
+        <div class="zg-avatar">Z</div>
+        <div class="zg-name">Z哥总评<span class="role">前阳光私募冠军</span></div>
+      </div>
+      <div class="zg-text" id="sumZgText">先批量导入交割单或单笔录入交易，Z 哥会基于所有交易给出综合评估。</div>
+    </div>
+  </div>
+
+  <!-- 一键深度复盘浮动按钮 -->
+  <button class="bulk-deep" id="bulkDeepBtn">
+    <span>Z 哥逐笔深度复盘</span>
+    <span class="count" id="bulkCount">0</span>
+  </button>
 
   <!-- ========== 底部金句 ========== -->
   <div class="closing">
@@ -1474,6 +1623,313 @@
     a.click();
     URL.revokeObjectURL(a.href);
   });
+
+  // ========== Z 哥深度复盘生成器 ==========
+  // 基于交易完整数据，模拟 Z 哥视角的多维度深度分析
+  function generateDeepReview(card) {
+    const data = extractCardData(card);
+    const v = data.verdict;
+    const isComplete = data.isComplete;
+    const profit = data.profitPct;
+    const holdDays = data.holdDays;
+    const sig = data.signalType;
+    const position = data.position;
+    const jVal = data.jVal;
+
+    let html = '<div class="da-title">Z哥深度复盘 · ' + (v === 'correct' ? '正确交易拆解' : v === 'wrong' ? '错误交易剖析' : '改进空间分析') + '</div>';
+
+    // 1. 买点分析
+    let buyAnalysis = '';
+    if (sig && sig.match(/B1|SB1/)) {
+      buyAnalysis = `<b>买点 ${sig}</b>：${jVal !== null ? 'J 值 ' + jVal + '，' : ''}符合战法信号，<span class="good">进场节奏是对的</span>。`;
+    } else if (sig === 'B2') {
+      buyAnalysis = `<b>买点 B2</b>：放量突破确认进场，<span class="good">趋势跟随正确</span>。`;
+    } else if (sig === 'B3') {
+      buyAnalysis = `<b>买点 B3</b>：分歧转一致节点，<span class="good">中继买点把握到位</span>。`;
+    } else if (sig === '长安战法') {
+      buyAnalysis = `<b>长安战法</b>：三日确认，胜率 75% 往上，<span class="good">保守稳健</span>。`;
+    } else if (jVal !== null && jVal > 80) {
+      buyAnalysis = `<b>无战法追高</b>：J 值 ${jVal} 已经超买区，<span class="bad">这就是接飞刀</span>。`;
+    } else if (!sig) {
+      buyAnalysis = `<b>无信号进场</b>：没有战法依据，<span class="bad">凭感觉交易</span>。`;
+    } else {
+      buyAnalysis = `<b>信号 ${sig}</b>：进场逻辑待复核。`;
+    }
+    html += `<div class="da-row">${buyAnalysis}</div>`;
+
+    // 2. 卖点分析（仅完整交易）
+    if (isComplete) {
+      let sellAnalysis = '';
+      if (profit !== null && profit > 0) {
+        if (holdDays !== null && holdDays <= 5 && profit < 8) {
+          sellAnalysis = `<b>卖点过早</b>：持仓仅 ${holdDays} 天就跑，赚 ${profit.toFixed(1)}% 是<span class="bad">卖飞节奏</span>。`;
+        } else if (sig === 'S1' || sig === 'S2' || sig === 'S3') {
+          sellAnalysis = `<b>卖点 ${sig}</b>：逃顶信号触发离场，<span class="good">纪律执行到位</span>。`;
+        } else if (sig === '卤煮') {
+          sellAnalysis = `<b>卤煮离场</b>：盈利 ${profit.toFixed(1)}% 落袋为安，<span class="good">节奏稳健</span>。`;
+        } else {
+          sellAnalysis = `<b>卖出执行</b>：盈利 ${profit.toFixed(1)}%，持仓 ${holdDays} 天。`;
+        }
+      } else if (profit !== null && profit < 0) {
+        sellAnalysis = `<b>止损离场</b>：亏损 ${Math.abs(profit).toFixed(1)}%，${Math.abs(profit) > 8 ? '<span class="bad">止损太晚</span>' : '<span class="good">跑得快</span>'}。`;
+      }
+      if (sellAnalysis) html += `<div class="da-row">${sellAnalysis}</div>`;
+    }
+
+    // 3. 仓位分析
+    let posAnalysis = '';
+    if (position !== null) {
+      if (position > 40) posAnalysis = `<b>仓位 ${position}%</b>：<span class="bad">违反三层防火墙铁律</span>，单笔不应超 40%。`;
+      else if (position >= 25) posAnalysis = `<b>仓位 ${position}%</b>：<span class="good">符合标准仓</span>，节奏稳健。`;
+      else posAnalysis = `<b>仓位 ${position}%</b>：试探性建仓，${profit !== null && profit > 10 ? '<span class="bad">仓位太轻错失主升</span>' : '<span class="good">谨慎试错</span>'}。`;
+    } else {
+      posAnalysis = `<b>仓位</b>：未填写，<span class="bad">建议下次记录仓位便于复盘</span>。`;
+    }
+    html += `<div class="da-row">${posAnalysis}</div>`;
+
+    // 4. 纪律评分
+    let discipline = '';
+    const score = data.stratScore || 3;
+    if (score >= 4) discipline = `<b>纪律评分 ${score}/5</b>：<span class="good">执行到位</span>。`;
+    else if (score >= 3) discipline = `<b>纪律评分 ${score}/5</b>：合格，但有提升空间。`;
+    else discipline = `<b>纪律评分 ${score}/5</b>：<span class="bad">需要加强</span>。`;
+    html += `<div class="da-row">${discipline}</div>`;
+
+    // 5. 改进建议
+    let improve = '<b>改进建议</b>：';
+    if (v === 'correct') {
+      improve += '<span class="good">保持节奏</span>，下次类似机会可以适当放大仓位至 35-40%。';
+    } else if (v === 'wrong') {
+      improve += '<span class="bad">问题在进场和仓位</span>，下次没有战法信号坚决不进场，单笔仓位不超过 30%。';
+    } else {
+      improve += '买点没问题，<span class="bad">卖点需要优化</span>，记住：趋势没坏就让利润奔跑，防卖飞评分 ≥4 时减半仓而非全跑。';
+    }
+    html += `<div class="da-row">${improve}</div>`;
+
+    // 6. 金句收尾
+    const quotes = {
+      correct: '"赚钱的交易都是相似的，亏钱的交易各有各的死法。"',
+      wrong: '"市场不缺机会，缺的是管住手。"',
+      partial: '"卖飞比亏钱更难受，但管不住手的人，永远只能赚小钱。"'
+    };
+    html += `<div class="da-quote">${quotes[v] || '"交易这行，靠的不是聪明，是纪律。"'}</div>`;
+    return html;
+  }
+
+  // 从卡片 DOM 提取数据
+  function extractCardData(card) {
+    const verdictEl = card.querySelector('.verdict');
+    const verdict = verdictEl ? (verdictEl.classList.contains('correct') ? 'correct' : verdictEl.classList.contains('wrong') ? 'wrong' : 'partial') : 'partial';
+    const text = card.innerText;
+    const nameMatch = text.match(/([\u4e00-\u9fa5A-Za-z]+)\s/);
+    const codeMatch = text.match(/(\d{6}\.[SH|SZ])/);
+    const priceMatch = text.match(/¥([\d.]+)/g) || [];
+    const profitMatch = text.match(/([+-]?\d+\.?\d*)%/);
+    const holdMatch = text.match(/持仓\s*(\d+)\s*天/);
+    const sigMatch = text.match(/(B1|B2|B3|SB1|长安战法|S1|S2|S3|卤煮|止损|卖飞|四块砖|无信号|待标注)/);
+    const posMatch = text.match(/仓位\s*(\d+)%/);
+    const scoreMatch = text.match(/评分\s*(\d)\/5/);
+    const jMatch = text.match(/J值\s*([-\d.]+)/);
+    const isComplete = text.includes('完整交易') || text.includes('COMPLETE');
+
+    return {
+      verdict,
+      name: nameMatch ? nameMatch[1] : '',
+      tsCode: codeMatch ? codeMatch[1] : '',
+      buyPrice: priceMatch[0] ? parseFloat(priceMatch[0].replace('¥','')) : null,
+      sellPrice: priceMatch[1] ? parseFloat(priceMatch[1].replace('¥','')) : null,
+      profitPct: profitMatch ? parseFloat(profitMatch[1]) : null,
+      holdDays: holdMatch ? parseInt(holdMatch[1]) : null,
+      signalType: sigMatch ? sigMatch[1] : '',
+      position: posMatch ? parseInt(posMatch[1]) : null,
+      stratScore: scoreMatch ? parseInt(scoreMatch[1]) : null,
+      jVal: jMatch ? parseFloat(jMatch[1]) : null,
+      isComplete,
+    };
+  }
+
+  // 给单张卡片注入深度复盘按钮
+  function injectDeepBtn(card) {
+    if (card.querySelector('.deep-btn')) return;
+    const zgReview = card.querySelector('.zg-review');
+    if (!zgReview) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'deep-btn';
+    btn.innerHTML = '◆ Z 哥深度复盘';
+    btn.addEventListener('click', () => {
+      let analysis = card.querySelector('.deep-analysis');
+      if (!analysis) {
+        analysis = document.createElement('div');
+        analysis.className = 'deep-analysis';
+        zgReview.parentNode.insertBefore(analysis, zgReview.nextSibling);
+      }
+      if (analysis.classList.contains('show')) {
+        analysis.classList.remove('show');
+        btn.classList.remove('done');
+        btn.innerHTML = '◆ Z 哥深度复盘';
+      } else {
+        analysis.innerHTML = generateDeepReview(card);
+        analysis.classList.add('show');
+        btn.classList.add('done');
+        btn.innerHTML = '✓ 已深度复盘';
+      }
+    });
+    zgReview.appendChild(btn);
+  }
+
+  // 给页面上所有卡片注入按钮（包括示例卡片 + 后续生成的）
+  function injectAllDeepBtns() {
+    document.querySelectorAll('.trade').forEach(injectDeepBtn);
+  }
+
+  // 监听 DOM 变化，新卡片自动注入按钮
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      m.addedNodes.forEach(node => {
+        if (node.nodeType === 1 && node.classList && node.classList.contains('trade')) {
+          injectDeepBtn(node);
+          updateStats();
+        }
+      });
+    });
+  });
+
+  // ========== 动态统计 ==========
+  function updateStats() {
+    const cards = document.querySelectorAll('.trade');
+    const bulkBtn = document.getElementById('bulkDeepBtn');
+    const bulkCount = document.getElementById('bulkCount');
+    if (cards.length === 0) {
+      bulkBtn.classList.remove('show');
+      return;
+    }
+    bulkBtn.classList.add('show');
+    bulkCount.textContent = cards.length;
+
+    let correct = 0, wrong = 0, partial = 0;
+    let completeCount = 0, winCount = 0;
+    let totalPnl = 0;
+    let totalAmount = 0;
+    let holdDays = [];
+
+    cards.forEach(c => {
+      const v = c.querySelector('.verdict');
+      if (!v) return;
+      if (v.classList.contains('correct')) correct++;
+      else if (v.classList.contains('wrong')) wrong++;
+      else partial++;
+
+      const text = c.innerText;
+      const isComplete = text.includes('完整交易') || text.includes('COMPLETE') || /盈亏\s*[+-]?\d/.test(text);
+      const profitMatch = text.match(/([+-]?\d+\.?\d*)%/);
+      const amountMatch = text.match(/金额\s*¥([\d,.]+)/);
+      const holdMatch = text.match(/持仓\s*(\d+)\s*天/);
+
+      if (isComplete && profitMatch) {
+        completeCount++;
+        const profit = parseFloat(profitMatch[1]);
+        if (profit > 0) winCount++;
+        const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : 0;
+        totalPnl += profit * amount / 100;
+        totalAmount += amount;
+      }
+      if (holdMatch) holdDays.push(parseInt(holdMatch[1]));
+    });
+
+    // 更新顶部仪表盘
+    setStat('sumTotal', cards.length, 'neutral', '');
+    const winrate = completeCount > 0 ? Math.round(winCount / completeCount * 100) : 0;
+    setStat('sumWinrate', winrate + '%', winrate >= 50 ? 'up' : 'down', `${winCount}/${completeCount} 笔盈利`);
+    const pnlPct = totalAmount > 0 ? (totalPnl / totalAmount * 100).toFixed(1) : '0.0';
+    setStat('sumPnl', (pnlPct >= 0 ? '+' : '') + pnlPct + '%', pnlPct >= 0 ? 'up' : 'down', '按金额加权');
+    const avgHold = holdDays.length ? Math.round(holdDays.reduce((a,b) => a+b, 0) / holdDays.length) : 0;
+    setStat('sumAvgHold', avgHold + '天', 'neutral', `最长 ${Math.max(...holdDays,0)} / 最短 ${Math.min(...holdDays,0)}`);
+
+    document.getElementById('sumCorrect').textContent = correct;
+    document.getElementById('sumWrong').textContent = wrong;
+    document.getElementById('sumPartial').textContent = partial;
+
+    // 生成 Z 哥总评
+    generateSummaryZg(correct, wrong, partial, winrate, parseFloat(pnlPct), avgHold, cards.length);
+  }
+
+  function setStat(id, value, cls, hint) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const v = el.querySelector('.value');
+    const h = el.querySelector('.hint');
+    v.className = 'value ' + cls;
+    v.innerHTML = value.toString().replace(/(\d+)/, '<span style="font-size:42px">$1</span>').replace(/<span[^>]*>(\d+)<\/span>(.+)/, '$1<span style="font-size:24px">$2</span>') || value;
+    // 简化：直接设值
+    v.innerHTML = value;
+    if (hint) h.textContent = hint;
+  }
+
+  function generateSummaryZg(correct, wrong, partial, winrate, pnlPct, avgHold, total) {
+    const el = document.getElementById('sumZgText');
+    if (!el) return;
+    let html = '';
+    if (total === 0) {
+      el.innerHTML = '先批量导入交割单或单笔录入交易，Z 哥会基于所有交易给出综合评估。';
+      return;
+    }
+    html += `总共 <b>${total}</b> 笔交易，其中 <span class="good">正确 ${correct} 笔</span>、<span class="bad">错误 ${wrong} 笔</span>、待改进 ${partial} 笔。<br>`;
+    if (winrate > 0) html += `综合胜率 <b>${winrate}%</b>，${winrate >= 60 ? '<span class="good">及格线以上</span>' : '<span class="bad">不及格，需要反思</span>'}。`;
+    if (pnlPct !== 0) html += ` 累计${pnlPct >= 0 ? '盈利' : '亏损'} <b>${pnlPct >= 0 ? '+' : ''}${pnlPct}%</b>（按金额加权）。`;
+    if (avgHold > 0) html += ` 平均持仓 <b>${avgHold} 天</b>。`;
+    html += '<br><br>';
+    // 综合诊断
+    if (wrong >= correct && wrong > 0) {
+      html += '<b>诊断</b>：错误交易偏多，<span class="bad">主要问题在进场和仓位</span>。建议先停手，回顾每笔错误交易的进场逻辑，没有战法信号坚决不动。';
+    } else if (partial > correct) {
+      html += '<b>诊断</b>：卖飞较多，<span class="bad">问题在卖点</span>。趋势没坏就让利润奔跑，防卖飞评分 ≥4 才减半仓。';
+    } else if (correct >= wrong && winrate >= 60) {
+      html += '<b>诊断</b>：<span class="good">节奏整体可以</span>，但要看是不是运气。继续按战法纪律执行，别飘。';
+    } else {
+      html += '<b>诊断</b>：交易样本还少，<span class="good">先攒够 20 笔再下结论</span>。';
+    }
+    html += '<br><br><span style="color:var(--gold);font-style:italic">"复盘不是为了后悔，是为了下一笔不再犯同样的错。"</span>';
+    el.innerHTML = html;
+  }
+
+  // 一键逐笔深度复盘
+  document.getElementById('bulkDeepBtn').addEventListener('click', async () => {
+    const cards = document.querySelectorAll('.trade');
+    if (!cards.length) return;
+    const btn = document.getElementById('bulkDeepBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span>正在逐笔分析...</span>';
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      let analysis = card.querySelector('.deep-analysis');
+      if (!analysis) {
+        analysis = document.createElement('div');
+        analysis.className = 'deep-analysis';
+        const zg = card.querySelector('.zg-review');
+        if (zg) zg.parentNode.insertBefore(analysis, zg.nextSibling);
+      }
+      analysis.innerHTML = generateDeepReview(card);
+      analysis.classList.add('show');
+      const btnDeep = card.querySelector('.deep-btn');
+      if (btnDeep) { btnDeep.classList.add('done'); btnDeep.innerHTML = '✓ 已深度复盘'; }
+      btn.innerHTML = `<span>已分析 ${i+1}/${cards.length}</span>`;
+      // 等一会再处理下一张，制造逐个分析的视觉效果
+      await new Promise(r => setTimeout(r, 350));
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<span>✓ 全部深度复盘完成</span><span class="count">' + cards.length + '</span>';
+    setTimeout(() => {
+      btn.innerHTML = '<span>Z 哥逐笔深度复盘</span><span class="count">' + cards.length + '</span>';
+    }, 3000);
+    // 滚动到综合评估
+    document.querySelector('.summary-zone').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // 初始化：注入按钮 + 启动统计 + 启动监听
+  injectAllDeepBtns();
+  updateStats();
+  observer.observe(document.querySelector('.trades'), { childList: true });
 </script>
 
 <script>
