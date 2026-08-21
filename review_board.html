@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交割单复盘 · Z哥交易终端</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0d0f;
+    --bg-2:#141418;
+    --bg-3:#1a1a20;
+    --panel:#16161c;
+    --line:#26262e;
+    --line-2:#33333d;
+    --txt:#f5f5f7;
+    --txt-2:#8a8a96;
+    --txt-3:#5a5a66;
+    --up:#ff3b30;       /* A股红 涨/盈利 */
+    --down:#00c853;     /* A股绿 跌/亏损 */
+    --gold:#ffb300;     /* 金句金 */
+    --gold-2:#ff8a00;
+    --warn:#ff6b1a;
+    --correct:#00c853;
+    --wrong:#ff3b30;
+    --neutral:#3a8aff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--txt);font-family:"Noto Sans SC","JetBrains Mono",sans-serif;-webkit-font-smoothing:antialiased}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(255,138,0,.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(0,200,83,.05), transparent 60%),
+      var(--bg);
+    background-attachment:fixed;
+  }
+  /* 顶部噪点纹理 */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  .wrap{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:32px 28px 80px}
+
+  /* ========== 顶部 Header ========== */
+  .topbar{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:28px;
+    gap:24px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:16px}
+  .logo{
+    width:46px;height:46px;border-radius:10px;
+    background:linear-gradient(135deg,var(--gold),var(--gold-2));
+    display:grid;place-items:center;font-family:"Bebas Neue";font-size:28px;color:#000;
+    box-shadow:0 6px 24px rgba(255,138,0,.35),inset 0 0 0 1px rgba(255,255,255,.2);
+  }
+  .brand h1{font-family:"Bebas Neue";font-size:38px;letter-spacing:2px;line-height:1}
+  .brand h1 .cn{font-family:"Noto Sans SC";font-weight:900;font-size:22px;letter-spacing:6px;margin-left:10px;color:var(--gold)}
+  .brand .sub{font-size:12px;color:var(--txt-2);letter-spacing:2px;margin-top:6px;font-family:"JetBrains Mono"}
+  .meta{display:flex;gap:18px;align-items:center;font-family:"JetBrains Mono";font-size:12px;color:var(--txt-2)}
+  .meta .dot{width:6px;height:6px;border-radius:50%;background:var(--correct);box-shadow:0 0 10px var(--correct);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ========== 总览仪表盘 ========== */
+  .dashboard{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px;
+  }
+  .stat{
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;
+  }
+  .stat::after{content:"";position:absolute;top:0;left:0;width:3px;height:100%;background:var(--gold)}
+  .stat .label{font-size:11px;color:var(--txt-2);letter-spacing:3px;text-transform:uppercase;font-family:"JetBrains Mono"}
+  .stat .value{font-family:"Bebas Neue";font-size:42px;line-height:1.1;margin-top:8px;letter-spacing:1px}
+  .stat .value.up{color:var(--up)}
+  .stat .value.down{color:var(--down)}
+  .stat .value.neutral{color:var(--neutral)}
+  .stat .hint{font-size:11px;color:var(--txt-3);margin-top:6px;font-family:"JetBrains Mono"}
+
+  /* ========== 区块标题 ========== */
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:40px 0 18px;border-bottom:1px dashed var(--line-2);padding-bottom:12px}
+  .sec-head h2{font-family:"Bebas Neue";font-size:30px;letter-spacing:2px}
+  .sec-head h2 .num{color:var(--gold);font-size:20px;margin-right:10px}
+  .sec-head .cn{font-family:"Noto Sans SC";font-weight:700;font-size:16px;color:var(--txt-2);letter-spacing:3px;margin-left:12px}
+  .sec-head .tag{font-family:"JetBrains Mono";font-size:11px;color:var(--txt-3);letter-spacing:2px}
+
+  /* ========== 交易卡片 ========== */
+  .trades{display:flex;flex-direction:column;gap:18px}
+  .trade{
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    transition:border-color .25s, transform .25s;
+    position:relative;
+  }
+  .trade:hover{border-color:var(--line-2);transform:translateY(-2px)}
+  .trade.correct{border-left:3px solid var(--correct)}
+  .trade.wrong{border-left:3px solid var(--wrong)}
+  .trade.partial{border-left:3px solid var(--warn)}
+
+  .trade-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 22px;border-bottom:1px solid var(--line);gap:16px;flex-wrap:wrap;
+  }
+  .stock{display:flex;align-items:center;gap:14px}
+  .stock .code{
+    font-family:"JetBrains Mono";font-size:11px;color:var(--txt-3);
+    background:var(--bg-3);padding:3px 8px;border-radius:4px;border:1px solid var(--line);
+  }
+  .stock .name{font-size:18px;font-weight:700;letter-spacing:1px}
+  .stock .date{font-family:"JetBrains Mono";font-size:11px;color:var(--txt-2)}
+
+  .verdict{
+    display:flex;align-items:center;gap:8px;
+    font-family:"Bebas Neue";font-size:18px;letter-spacing:2px;
+    padding:5px 12px;border-radius:6px;
+  }
+  .verdict.correct{background:rgba(0,200,83,.12);color:var(--correct);border:1px solid rgba(0,200,83,.3)}
+  .verdict.wrong{background:rgba(255,59,48,.12);color:var(--wrong);border:1px solid rgba(255,59,48,.3)}
+  .verdict.partial{background:rgba(255,107,26,.12);color:var(--warn);border:1px solid rgba(255,107,26,.3)}
+
+  .trade-body{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:0}
+  .cell{padding:16px 22px;border-right:1px solid var(--line)}
+  .cell:last-child{border-right:none}
+  .cell .k{font-size:10px;color:var(--txt-3);letter-spacing:2px;text-transform:uppercase;font-family:"JetBrains Mono";margin-bottom:8px}
+  .row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+  .row .lbl{font-size:11px;color:var(--txt-2);min-width:48px}
+  .row .v{font-family:"JetBrains Mono";font-size:14px;font-weight:500}
+  .v.up{color:var(--up)}
+  .v.down{color:var(--down)}
+  .pill{
+    display:inline-block;font-family:"JetBrains Mono";font-size:10px;
+    padding:2px 8px;border-radius:4px;background:var(--bg-3);border:1px solid var(--line-2);
+    color:var(--txt-2);letter-spacing:1px;
+  }
+  .pill.b1{color:#ffb300;border-color:rgba(255,179,0,.4);background:rgba(255,179,0,.08)}
+  .pill.b2{color:#3a8aff;border-color:rgba(58,138,255,.4);background:rgba(58,138,255,.08)}
+  .pill.b3{color:#bd5cff;border-color:rgba(189,92,255,.4);background:rgba(189,92,255,.08)}
+  .pill.sell{color:#ff6b6b;border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.08)}
+
+  /* Z哥点评 */
+  .zg-review{
+    padding:16px 22px;border-top:1px solid var(--line);
+    background:
+      linear-gradient(90deg, rgba(255,179,0,.06), transparent 60%),
+      var(--bg-3);
+    position:relative;
+  }
+  .zg-review::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);
+  }
+  .zg-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .zg-avatar{
+    width:26px;height:26px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),var(--gold-2));
+    display:grid;place-items:center;font-family:"Bebas Neue";color:#000;font-size:14px;
+  }
+  .zg-name{font-weight:700;font-size:13px;color:var(--gold);letter-spacing:1px}
+  .zg-name .role{font-weight:400;color:var(--txt-3);font-size:11px;margin-left:6px}
+  .zg-text{font-size:14px;line-height:1.85;color:var(--txt);letter-spacing:.3px}
+  .zg-text .hl{color:var(--gold);font-weight:700}
+  .zg-text .strike{color:var(--wrong);font-weight:700}
+  .zg-text .ok{color:var(--correct);font-weight:700}
+  .zg-text .quote{
+    display:block;margin-top:10px;padding:8px 14px;
+    border-left:2px solid var(--gold);background:rgba(255,179,0,.05);
+    font-style:italic;color:var(--gold);font-size:13px;
+  }
+
+  /* ========== 判定标准 ========== */
+  .criteria{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:8px}
+  .crit-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+  }
+  .crit-card .t{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .crit-card .t .ic{
+    width:24px;height:24px;border-radius:6px;display:grid;place-items:center;
+    font-family:"Bebas Neue";font-size:14px;
+  }
+  .crit-card.ok .ic{background:rgba(0,200,83,.15);color:var(--correct)}
+  .crit-card.no .ic{background:rgba(255,59,48,.15);color:var(--wrong)}
+  .crit-card.warn .ic{background:rgba(255,107,26,.15);color:var(--warn)}
+  .crit-card .t h4{font-size:14px;font-weight:700;letter-spacing:1px}
+  .crit-card ul{list-style:none;font-size:12px;color:var(--txt-2);line-height:1.9}
+  .crit-card ul li::before{content:"›";color:var(--gold);margin-right:8px;font-weight:700}
+
+  /* ========== 黑话词典 ========== */
+  .jargon{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;
+  }
+  .j-item{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:6px;background:var(--bg-3)}
+  .j-item .term{font-family:"JetBrains Mono";font-size:12px;color:var(--gold);font-weight:700}
+  .j-item .def{font-size:11px;color:var(--txt-2);line-height:1.5}
+
+  /* ========== 底部金句 ========== */
+  .closing{
+    margin-top:40px;padding:28px 32px;border-radius:14px;
+    background:
+      linear-gradient(135deg, rgba(255,179,0,.1), rgba(255,59,48,.06)),
+      var(--panel);
+    border:1px solid var(--line-2);position:relative;overflow:hidden;
+  }
+  .closing::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(400px 200px at 90% 0%, rgba(255,179,0,.15), transparent 70%);
+    pointer-events:none;
+  }
+  .closing .label{font-family:"JetBrains Mono";font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase}
+  .closing .saying{
+    font-size:22px;font-weight:700;line-height:1.6;margin-top:10px;letter-spacing:1px;
+    position:relative;
+  }
+  .closing .sign{display:block;margin-top:14px;font-family:"Bebas Neue";font-size:16px;color:var(--gold);letter-spacing:2px}
+
+  .footer{margin-top:48px;text-align:center;font-size:11px;color:var(--txt-3);font-family:"JetBrains Mono";letter-spacing:1px;line-height:1.8}
+  .footer .disclaimer{color:var(--warn);margin-top:6px}
+
+  @media(max-width:900px){
+    .dashboard{grid-template-columns:repeat(2,1fr)}
+    .trade-body{grid-template-columns:1fr}
+    .cell{border-right:none;border-bottom:1px solid var(--line)}
+    .criteria{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== 顶部 Header ========== -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">Z</div>
+      <div>
+        <h1>REVIEW BOARD<span class="cn">交割单复盘</span></h1>
+        <div class="sub">// zettaranc trading terminal · post-trade diagnosis</div>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="dot"></span>
+      <span>复盘周期：2026.04.21 — 2026.08.21</span>
+      <span>|</span>
+      <span>生成于 2026-08-21 15:42</span>
+    </div>
+  </div>
+
+  <!-- ========== 总览仪表盘 ========== -->
+  <div class="dashboard">
+    <div class="stat">
+      <div class="label">总交易笔数</div>
+      <div class="value neutral">04</div>
+      <div class="hint">含 3 完整交易 / 1 持仓中</div>
+    </div>
+    <div class="stat">
+      <div class="label">综合胜率</div>
+      <div class="value up">75<span style="font-size:24px">%</span></div>
+      <div class="hint">3/4 笔按战法判定为正确</div>
+    </div>
+    <div class="stat">
+      <div class="label">累计盈亏</div>
+      <div class="value up">+9.7<span style="font-size:24px">%</span></div>
+      <div class="hint">加权收益率（按仓位）</div>
+    </div>
+    <div class="stat">
+      <div class="label">平均持仓</div>
+      <div class="value neutral">14<span style="font-size:24px">天</span></div>
+      <div class="hint">最长 28 天 / 最短 3 天</div>
+    </div>
+  </div>
+
+  <!-- ========== 交易复盘列表 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">01</span>TRADE LOG<span class="cn">逐笔复盘</span></h2>
+    <span class="tag">按战法匹配 / 买卖点 / 仓位纪律 综合判定</span>
+  </div>
+
+  <div class="trades">
+
+    <!-- 交易 1：贵州茅台 - 正确 -->
+    <div class="trade correct">
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">600519.SH</span>
+          <span class="name">贵州茅台</span>
+          <span class="date">买 2026.07.14 → 卖 2026.08.01</span>
+        </div>
+        <div class="verdict correct">CORRECT · 教科书</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">买入 / ENTRY</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥1685.00</span></div>
+          <div class="row"><span class="lbl">仓位</span><span class="v">30%</span></div>
+          <div class="row"><span class="lbl">信号</span><span class="pill b1">B1</span><span class="pill">J值-12.3</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">卖出 / EXIT</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥1887.20</span></div>
+          <div class="row"><span class="lbl">盈亏</span><span class="v up">+12.0%</span></div>
+          <div class="row"><span class="lbl">持仓</span><span class="v">18 天</span></div>
+          <div class="row"><span class="lbl">类型</span><span class="pill sell">卤煮</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">战法匹配 / STRATEGY</div>
+          <div class="row"><span class="pill b1">B1 买点</span><span class="pill">S1 逃顶</span></div>
+          <div class="row"><span class="lbl">评分</span><span class="v up">5/5</span></div>
+          <div class="row"><span class="lbl">防卖飞</span><span class="v">2/5（安全）</span></div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">
+          这笔我给你打 <span class="ok">满分</span>。J值-12.3 进的场，B1 信号确认，仓位压到三成，<span class="hl">节奏感是对的</span>。18 天卤煮 12 个点，没贪、没恋战，S1 信号一出就走人——这就是少妇战法里讲的"该走就走，别等回头"。
+          <span class="quote">"赚钱的交易都是相似的，亏钱的交易各有各的死法。"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交易 2：宁德时代 - 错误 -->
+    <div class="trade wrong">
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">300750.SZ</span>
+          <span class="name">宁德时代</span>
+          <span class="date">买 2026.07.22 → 卖 2026.07.25</span>
+        </div>
+        <div class="verdict wrong">WRONG · 追高</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">买入 / ENTRY</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥218.50</span></div>
+          <div class="row"><span class="lbl">仓位</span><span class="v">40%</span></div>
+          <div class="row"><span class="lbl">信号</span><span class="pill">无战法</span><span class="pill">J值 98</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">卖出 / EXIT</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥201.00</span></div>
+          <div class="row"><span class="lbl">盈亏</span><span class="v down">-8.0%</span></div>
+          <div class="row"><span class="lbl">持仓</span><span class="v">3 天</span></div>
+          <div class="row"><span class="lbl">类型</span><span class="pill sell">止损</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">战法匹配 / STRATEGY</div>
+          <div class="row"><span class="pill">无匹配</span></div>
+          <div class="row"><span class="lbl">评分</span><span class="v down">1/5</span></div>
+          <div class="row"><span class="lbl">问题</span><span class="v down">追高 / 重仓</span></div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">
+          这笔 <span class="strike">典型的死法</span>。J 值 98 你还往里冲？这不叫 B1，这叫"接飞刀"。仓位直接干到四成，<span class="strike">哪来的底气</span>？三天止损 8 个点，算你跑得快，不然就是个深套。<span class="hl">记住：没信号的交易，就是赌博。</span>
+          <span class="quote">"市场不缺机会，缺的是管住手。"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交易 3：比亚迪 - 部分/可惜 -->
+    <div class="trade partial">
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">002594.SZ</span>
+          <span class="name">比亚迪</span>
+          <span class="date">买 2026.06.10 → 卖 2026.06.20</span>
+        </div>
+        <div class="verdict partial">PARTIAL · 卖飞</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">买入 / ENTRY</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥235.00</span></div>
+          <div class="row"><span class="lbl">仓位</span><span class="v">25%</span></div>
+          <div class="row"><span class="lbl">信号</span><span class="pill b2">B2</span><span class="pill">放量突破</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">卖出 / EXIT</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥246.75</span></div>
+          <div class="row"><span class="lbl">盈亏</span><span class="v up">+5.0%</span></div>
+          <div class="row"><span class="lbl">持仓</span><span class="v">10 天</span></div>
+          <div class="row"><span class="lbl">类型</span><span class="pill sell">卖飞</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">战法匹配 / STRATEGY</div>
+          <div class="row"><span class="pill b2">B2 买点</span><span class="pill">过早离场</span></div>
+          <div class="row"><span class="lbl">评分</span><span class="v">3/5</span></div>
+          <div class="row"><span class="lbl">后续</span><span class="v down">再涨 14%</span></div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">
+          买点没问题，B2 放量突破进的，<span class="ok">进场是对的</span>。但卖出这手<span class="strike">太急</span>了。盈利 5% 就跑，结果后面又涨了 14 个点——这就是典型的<span class="hl">卖飞</span>。防卖飞评分 4/5 的时候你该减半仓，不是全跑。下次记住：<span class="hl">趋势没坏，就让利润奔跑。</span>
+          <span class="quote">"卖飞比亏钱更难受，但管不住手的人，永远只能赚小钱。"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交易 4：中国平安 - 正确 -->
+    <div class="trade correct">
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">601318.SH</span>
+          <span class="name">中国平安</span>
+          <span class="date">买 2026.05.18 → 卖 2026.06.15</span>
+        </div>
+        <div class="verdict correct">CORRECT · 长安战法</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">买入 / ENTRY</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥48.20</span></div>
+          <div class="row"><span class="lbl">仓位</span><span class="v">35%</span></div>
+          <div class="row"><span class="lbl">信号</span><span class="pill b3">B3</span><span class="pill">长安战法</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">卖出 / EXIT</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥56.85</span></div>
+          <div class="row"><span class="lbl">盈亏</span><span class="v up">+17.9%</span></div>
+          <div class="row"><span class="lbl">持仓</span><span class="v">28 天</span></div>
+          <div class="row"><span class="lbl">类型</span><span class="pill sell">卤煮</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">战法匹配 / STRATEGY</div>
+          <div class="row"><span class="pill b3">B3 买点</span><span class="pill">S2 防卖飞</span></div>
+          <div class="row"><span class="lbl">评分</span><span class="v up">5/5</span></div>
+          <div class="row"><span class="lbl">纪律</span><span class="v up">分批止盈</span></div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">
+          长安战法，三日确认，胜率本来就七成五往上，你这笔<span class="ok">打满了</span>。B3 分歧转一致的节点进的，28 天拿住没动摇，S2 信号出现才分批止盈——<span class="hl">这就是教科书</span>。17.9 个点，节奏、纪律、仓位三件套齐活。多来几笔这样的，你就不需要问我了。
+          <span class="quote">"交易这行，靠的不是聪明，是纪律。"</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== 判定标准 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">02</span>CRITERIA<span class="cn">判定标准</span></h2>
+    <span class="tag">基于战法匹配 / 买卖点纪律 / 仓位铁律</span>
+  </div>
+  <div class="criteria">
+    <div class="crit-card ok">
+      <div class="t"><div class="ic">✓</div><h4>正确交易 / CORRECT</h4></div>
+      <ul>
+        <li>买点符合 B1/B2/B3/SB1 战法信号</li>
+        <li>J 值、BBI、量比位置确认时机</li>
+        <li>卖出执行 S1/S2/S3 逃顶纪律</li>
+        <li>仓位符合三层防火墙（≤40%）</li>
+        <li>有明确止损/止盈规则并执行</li>
+      </ul>
+    </div>
+    <div class="crit-card no">
+      <div class="t"><div class="ic">✕</div><h4>错误交易 / WRONG</h4></div>
+      <ul>
+        <li>无战法信号追高买入（J 值 &gt; 80）</li>
+        <li>仓位超过铁律上限（&gt;40%）</li>
+        <li>未设止损被深套后被动割肉</li>
+        <li>违反"少妇战法"频繁交易</li>
+        <li>情绪化操作 / 听消息买卖</li>
+      </ul>
+    </div>
+    <div class="crit-card warn">
+      <div class="t"><div class="ic">△</div><h4>部分正确 / PARTIAL</h4></div>
+      <ul>
+        <li>买点对但卖点过早（卖飞）</li>
+        <li>买点对但仓位过轻错失主升</li>
+        <li>未按战法分批止盈</li>
+        <li>趋势未坏提前离场</li>
+        <li>需结合后续行情二次判定</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ========== 黑话词典 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">03</span>JARGON<span class="cn">黑话词典</span></h2>
+    <span class="tag">复盘术语对照表</span>
+  </div>
+  <div class="jargon">
+    <div class="j-item"><span class="term">卤煮</span><span class="def">落袋为安，赚钱后卖出</span></div>
+    <div class="j-item"><span class="term">建仓</span><span class="def">试探性买入，轻仓</span></div>
+    <div class="j-item"><span class="term">卖飞</span><span class="def">卖出后股价继续大涨</span></div>
+    <div class="j-item"><span class="term">B1</span><span class="def">买点1，J值&lt;-10 的买入信号</span></div>
+    <div class="j-item"><span class="term">B2</span><span class="def">买点2，放量突破确认</span></div>
+    <div class="j-item"><span class="term">B3</span><span class="def">买点3，分歧转一致中继</span></div>
+    <div class="j-item"><span class="term">SB1</span><span class="def">超级B1，震仓后的买点</span></div>
+    <div class="j-item"><span class="term">长安战法</span><span class="def">三日确认战法，胜率75%</span></div>
+    <div class="j-item"><span class="term">S1/S2/S3</span><span class="def">卖出逃顶三信号</span></div>
+    <div class="j-item"><span class="term">四块砖</span><span class="def">砖型图连4根红砖减半仓</span></div>
+    <div class="j-item"><span class="term">白线</span><span class="def">Z哥白线，强势股趋势线</span></div>
+    <div class="j-item"><span class="term">大哥线</span><span class="def">知行多空线，主力成本线</span></div>
+  </div>
+
+  <!-- ========== 底部金句 ========== -->
+  <div class="closing">
+    <div class="label">// CLOSING REMARK</div>
+    <div class="saying">
+      复盘不是为了后悔，是为了下一笔不再犯同样的错。<br>
+      赚钱的交易记下来，那是你的本事；亏钱的交易也记下来，那才是你的学费。
+    </div>
+    <span class="sign">— zettaranc · 万千</span>
+  </div>
+
+  <div class="footer">
+    zettaranc trading terminal · review board v1.0<br>
+    <span class="disclaimer">本版面不构成任何投资建议，仅供个人交易复盘使用 | 交易有风险，入场需谨慎</span>
+  </div>
+
+</div>
+</body>
+</html>
