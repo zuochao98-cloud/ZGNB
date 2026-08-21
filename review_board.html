@@ -186,6 +186,45 @@
   .crit-card ul{list-style:none;font-size:12px;color:var(--txt-2);line-height:1.9}
   .crit-card ul li::before{content:"›";color:var(--gold);margin-right:8px;font-weight:700}
 
+  /* ========== K线图上传 ========== */
+  .kline-zone{
+    grid-column:1/-1;padding:14px 22px;border-top:1px solid var(--line);
+    background:var(--bg-3);
+  }
+  .kline-zone .k{font-size:10px;color:var(--txt-3);letter-spacing:2px;text-transform:uppercase;font-family:"JetBrains Mono";margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+  .kline-drop{
+    position:relative;border:1.5px dashed var(--line-2);border-radius:10px;
+    min-height:120px;display:grid;place-items:center;
+    color:var(--txt-3);font-size:12px;font-family:"JetBrains Mono";letter-spacing:1px;
+    cursor:pointer;transition:border-color .25s,background .25s;overflow:hidden;
+    background:repeating-linear-gradient(45deg,transparent,transparent 12px,rgba(255,255,255,.012) 12px,rgba(255,255,255,.012) 24px);
+  }
+  .kline-drop:hover{border-color:var(--gold);color:var(--gold);background:rgba(255,179,0,.04)}
+  .kline-drop.dragover{border-color:var(--gold);background:rgba(255,179,0,.08);color:var(--gold)}
+  .kline-drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .kline-drop .ph{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:20px}
+  .kline-drop .ph .ic{font-size:28px;color:var(--txt-3);line-height:1}
+  .kline-drop:hover .ph .ic{color:var(--gold)}
+  .kline-preview{position:relative;width:100%}
+  .kline-preview img{width:100%;max-height:380px;object-fit:contain;border-radius:8px;display:block;background:#0a0a0c}
+  .kline-preview .bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 0 0;font-family:"JetBrains Mono";font-size:11px;color:var(--txt-2);
+  }
+  .kline-preview .bar .name{color:var(--gold)}
+  .kline-preview .remove{
+    background:rgba(255,59,48,.12);color:var(--wrong);border:1px solid rgba(255,59,48,.3);
+    padding:3px 10px;border-radius:4px;cursor:pointer;font-size:10px;letter-spacing:1px;
+    font-family:"JetBrains Mono";transition:background .2s;
+  }
+  .kline-preview .remove:hover{background:rgba(255,59,48,.25)}
+  .upload-hint{
+    margin-top:10px;padding:8px 12px;border-radius:6px;
+    background:rgba(58,138,255,.06);border:1px solid rgba(58,138,255,.2);
+    font-size:11px;color:var(--neutral);line-height:1.6;font-family:"JetBrains Mono";
+  }
+  .upload-hint b{color:var(--gold)}
+
   /* ========== 黑话词典 ========== */
   .jargon{
     display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;
@@ -319,6 +358,13 @@
           <span class="quote">"赚钱的交易都是相似的，亏钱的交易各有各的死法。"</span>
         </div>
       </div>
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">点击或拖拽上传 · 支持 PNG/JPG</span></div>
+        <div class="kline-drop">
+          <input type="file" accept="image/png,image/jpeg" data-stock="600519.SH">
+          <div class="ph"><div class="ic">⬆</div><div>上传贵州茅台 K线截图</div><div style="font-size:10px">建议标注买卖点位置</div></div>
+        </div>
+      </div>
     </div>
 
     <!-- 交易 2：宁德时代 - 错误 -->
@@ -360,6 +406,13 @@
         <div class="zg-text">
           这笔 <span class="strike">典型的死法</span>。J 值 98 你还往里冲？这不叫 B1，这叫"接飞刀"。仓位直接干到四成，<span class="strike">哪来的底气</span>？三天止损 8 个点，算你跑得快，不然就是个深套。<span class="hl">记住：没信号的交易，就是赌博。</span>
           <span class="quote">"市场不缺机会，缺的是管住手。"</span>
+        </div>
+      </div>
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">点击或拖拽上传 · 支持 PNG/JPG</span></div>
+        <div class="kline-drop">
+          <input type="file" accept="image/png,image/jpeg" data-stock="300750.SZ">
+          <div class="ph"><div class="ic">⬆</div><div>上传宁德时代 K线截图</div><div style="font-size:10px">看看追高位置有多离谱</div></div>
         </div>
       </div>
     </div>
@@ -405,6 +458,13 @@
           <span class="quote">"卖飞比亏钱更难受，但管不住手的人，永远只能赚小钱。"</span>
         </div>
       </div>
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">点击或拖拽上传 · 支持 PNG/JPG</span></div>
+        <div class="kline-drop">
+          <input type="file" accept="image/png,image/jpeg" data-stock="002594.SZ">
+          <div class="ph"><div class="ic">⬆</div><div>上传比亚迪 K线截图</div><div style="font-size:10px">标注卖出点 vs 后续涨幅</div></div>
+        </div>
+      </div>
     </div>
 
     <!-- 交易 4：中国平安 - 正确 -->
@@ -448,8 +508,21 @@
           <span class="quote">"交易这行，靠的不是聪明，是纪律。"</span>
         </div>
       </div>
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">点击或拖拽上传 · 支持 PNG/JPG</span></div>
+        <div class="kline-drop">
+          <input type="file" accept="image/png,image/jpeg" data-stock="601318.SH">
+          <div class="ph"><div class="ic">⬆</div><div>上传中国平安 K线截图</div><div style="font-size:10px">完整趋势 + B3/S2 节点</div></div>
+        </div>
+      </div>
     </div>
 
+  </div>
+
+  <!-- ========== K线图使用说明 ========== -->
+  <div class="upload-hint">
+    <b>// UPLOAD GUIDE</b>　每张交易卡片底部设有上传区，<b>点击</b>选择文件或<b>拖拽</b> K线截图即可嵌入。图片仅在本地浏览器预览，<b>不上传任何服务器</b>，刷新页面即清除。
+    建议从交易软件（同花顺/通达信/东方财富）截取包含买入点、卖出点、技术指标窗口的完整 K 线图，便于复盘时直观对照买卖时机。
   </div>
 
   <!-- ========== 判定标准 ========== -->
@@ -526,5 +599,83 @@
   </div>
 
 </div>
+<script>
+  // K线图上传交互：点击 + 拖拽 + 预览 + 移除
+  document.querySelectorAll('.kline-drop').forEach(zone => {
+    const input = zone.querySelector('input[type="file"]');
+    const ph = zone.querySelector('.ph');
+    const stock = input.dataset.stock || '';
+
+    function handleFile(file) {
+      if (!file) return;
+      if (!/^image\/(png|jpeg|jpg)$/i.test(file.type)) {
+        alert('只支持 PNG / JPG 格式');
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        alert('图片不能超过 8MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.createElement('div');
+        preview.className = 'kline-preview';
+        preview.innerHTML = `
+          <img src="${e.target.result}" alt="${stock} K线图">
+          <div class="bar">
+            <span><span class="name">${stock}</span> · ${file.name}</span>
+            <button class="remove" type="button">移除图片 ×</button>
+          </div>
+        `;
+        zone.innerHTML = '';
+        zone.appendChild(preview);
+        zone.classList.remove('dragover');
+        // 重新挂载隐藏 input 以便重复上传
+        const newInput = document.createElement('input');
+        newInput.type = 'file';
+        newInput.accept = 'image/png,image/jpeg';
+        newInput.dataset.stock = stock;
+        newInput.style.cssText = 'position:absolute;inset:0;opacity:0;cursor:pointer';
+        zone.appendChild(newInput);
+        bindInput(newInput, zone, stock);
+        preview.querySelector('.remove').addEventListener('click', ev => {
+          ev.stopPropagation();
+          resetZone(zone, stock);
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function bindInput(inp, zn, code) {
+      inp.addEventListener('change', () => {
+        if (inp.files && inp.files[0]) handleFile(inp.files[0]);
+      });
+    }
+
+    function resetZone(zn, code) {
+      zn.classList.remove('dragover');
+      zn.innerHTML = `
+        <input type="file" accept="image/png,image/jpeg" data-stock="${code}">
+        <div class="ph"><div class="ic">⬆</div><div>重新上传 K线截图</div><div style="font-size:10px">点击或拖拽 PNG/JPG</div></div>
+      `;
+      const ni = zn.querySelector('input');
+      bindInput(ni, zn, code);
+      attachDrag(zn, code);
+    }
+
+    function attachDrag(zn, code) {
+      zn.addEventListener('dragover', e => { e.preventDefault(); zn.classList.add('dragover'); });
+      zn.addEventListener('dragleave', () => zn.classList.remove('dragover'));
+      zn.addEventListener('drop', e => {
+        e.preventDefault();
+        zn.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+    }
+
+    bindInput(input, zone, stock);
+    attachDrag(zone, stock);
+  });
+</script>
 </body>
 </html>
