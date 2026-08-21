@@ -468,6 +468,77 @@
   .summary-zg .zg-text .bad{color:var(--up);font-weight:700}
   @media(max-width:900px){.summary-grid{grid-template-columns:repeat(2,1fr)}.summary-verdict{grid-template-columns:1fr}}
 
+  /* ========== 错误模式诊断 ========== */
+  .diagnosis-zone{
+    margin-top:20px;padding:22px 26px;border-radius:12px;
+    background:linear-gradient(135deg,rgba(255,59,48,.04),var(--bg-3));
+    border:1px solid rgba(255,59,48,.25);border-left:3px solid var(--up);
+    display:none;
+  }
+  .diagnosis-zone.show{display:block;animation:fadeIn .4s}
+  .diag-head{
+    display:flex;align-items:center;gap:10px;margin-bottom:14px;
+    padding-bottom:10px;border-bottom:1px dashed rgba(255,59,48,.2);
+  }
+  .diag-head .ic{
+    width:28px;height:28px;border-radius:6px;display:grid;place-items:center;
+    background:rgba(255,59,48,.15);color:var(--up);font-family:"Bebas Neue";font-size:16px;
+  }
+  .diag-head h3{font-family:"Bebas Neue";font-size:20px;letter-spacing:2px;color:var(--up)}
+  .diag-head h3 .cn{font-family:"Noto Sans SC";font-weight:700;font-size:13px;color:var(--gold);letter-spacing:2px;margin-left:8px}
+  .diag-head .desc{margin-left:auto;font-size:11px;color:var(--txt-3);font-family:"JetBrains Mono";letter-spacing:1px}
+
+  /* 错误模式列表 */
+  .diag-modes{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+  .diag-mode{
+    display:grid;grid-template-columns:30px 1fr 70px;gap:14px;align-items:center;
+    padding:12px 16px;border-radius:8px;background:var(--bg-3);border:1px solid var(--line);
+    transition:all .2s;
+  }
+  .diag-mode.high{border-color:rgba(255,59,48,.4);background:rgba(255,59,48,.05)}
+  .diag-mode.mid{border-color:rgba(255,107,26,.4);background:rgba(255,107,26,.05)}
+  .diag-mode.low{border-color:var(--line)}
+  .diag-mode .rank{
+    font-family:"Bebas Neue";font-size:24px;color:var(--txt-3);text-align:center;line-height:1;
+  }
+  .diag-mode.high .rank{color:var(--up)}
+  .diag-mode.mid .rank{color:var(--warn)}
+  .diag-mode .info .name{font-weight:700;font-size:14px;color:var(--txt);margin-bottom:3px}
+  .diag-mode .info .name .tag{
+    display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;
+    margin-left:8px;font-family:"JetBrains Mono";letter-spacing:1px;
+  }
+  .diag-mode .info .desc{font-size:12px;color:var(--txt-2);line-height:1.6}
+  .diag-mode .info .desc b{color:var(--gold)}
+  .diag-mode .info .desc .bad{color:var(--up);font-weight:700}
+  .diag-mode .info .stocks{font-size:11px;color:var(--txt-3);margin-top:4px;font-family:"JetBrains Mono"}
+  .diag-mode .bar-cell{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .diag-mode .count{font-family:"Bebas Neue";font-size:22px;color:var(--up);line-height:1}
+  .diag-mode.mid .count{color:var(--warn)}
+  .diag-mode.low .count{color:var(--txt-2)}
+  .diag-mode .bar{
+    width:60px;height:4px;background:var(--bg);border-radius:2px;overflow:hidden;
+  }
+  .diag-mode .bar i{display:block;height:100%;background:var(--up);transition:width .5s}
+  .diag-mode.mid .bar i{background:var(--warn)}
+  .diag-mode.low .bar i{background:var(--txt-3)}
+
+  /* 改进路线图 */
+  .diag-fix{
+    margin-top:16px;padding:14px 18px;border-radius:8px;
+    background:linear-gradient(90deg,rgba(0,200,83,.06),transparent 70%);
+    border-left:3px solid var(--down);
+  }
+  .diag-fix .fix-title{
+    font-family:"Bebas Neue";font-size:14px;color:var(--down);letter-spacing:2px;
+    margin-bottom:8px;display:flex;align-items:center;gap:8px;
+  }
+  .diag-fix .fix-title::before{content:"◆";font-size:10px}
+  .diag-fix ol{margin:0;padding-left:18px;font-size:13px;color:var(--txt);line-height:1.9}
+  .diag-fix ol li b{color:var(--down)}
+  .diag-fix ol li .bad{color:var(--up);font-weight:700}
+  @media(max-width:900px){.diag-mode{grid-template-columns:24px 1fr 50px}}
+
   /* ========== 黑话词典 ========== */
   .jargon{
     display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;
@@ -1030,6 +1101,17 @@
         <div class="zg-name">Z哥总评<span class="role">前阳光私募冠军</span></div>
       </div>
       <div class="zg-text" id="sumZgText">先批量导入交割单或单笔录入交易，Z 哥会基于所有交易给出综合评估。</div>
+    </div>
+
+    <!-- 错误模式诊断 -->
+    <div class="diagnosis-zone" id="diagnosisZone">
+      <div class="diag-head">
+        <div class="ic">!</div>
+        <h3>ERROR PATTERNS<span class="cn">错误模式诊断</span></h3>
+        <span class="desc">基于所有错误/待改进交易归类统计 · 按频次排序</span>
+      </div>
+      <div class="diag-modes" id="diagModes"></div>
+      <div class="diag-fix" id="diagFix"></div>
     </div>
   </div>
 
@@ -1852,6 +1934,155 @@
 
     // 生成 Z 哥总评
     generateSummaryZg(correct, wrong, partial, winrate, parseFloat(pnlPct), avgHold, cards.length);
+    // 错误模式诊断
+    generateDiagnosis(cards);
+  }
+
+  // ========== 错误模式诊断 ==========
+  // 定义 6 大常见错误模式，扫描所有错误/待改进交易归类
+  const ERROR_PATTERNS = {
+    chase_high: {
+      name: '追高接飞刀',
+      tag: '进场',
+      tagColor: 'rgba(255,59,48,.3)',
+      desc: 'J 值超买区（&gt;80）或无战法信号追高进场，<b>违反"少妇战法"</b>频率控制',
+      fix: '<b>纪律</b>：J 值 &gt; 80 坚决不进场，没有 B1/B2/B3 信号不动手',
+    },
+    over_position: {
+      name: '仓位过重',
+      tag: '仓位',
+      tagColor: 'rgba(255,59,48,.3)',
+      desc: '单笔仓位 &gt; 40%，<span class="bad">违反三层防火墙铁律</span>，单只股票风险敞口过大',
+      fix: '<b>铁律</b>：单笔不超过 40%，单板块不超过 60%，总仓位不超过 80%',
+    },
+    sell_too_early: {
+      name: '卖飞过早',
+      tag: '卖点',
+      tagColor: 'rgba(255,107,26,.3)',
+      desc: '盈利 &lt; 8% 或持仓 ≤ 5 天就跑，<span class="bad">没让利润奔跑</span>，错过主升浪',
+      fix: '<b>规则</b>：防卖飞评分 ≥ 4 才减半仓，趋势未破不全跑',
+    },
+    stop_loss_late: {
+      name: '止损太晚',
+      tag: '止损',
+      tagColor: 'rgba(255,59,48,.3)',
+      desc: '亏损 &gt; 8% 才止损，<span class="bad">小亏拖成大亏</span>，没有执行 S1 逃顶信号',
+      fix: '<b>纪律</b>：跌破买入价 5% 立即止损，S1 信号一出就走',
+    },
+    no_signal: {
+      name: '无战法信号',
+      tag: '进场',
+      tagColor: 'rgba(255,107,26,.3)',
+      desc: '凭感觉/听消息进场，<span class="bad">没有战法依据</span>，等同于赌博',
+      fix: '<b>原则</b>：只做有信号的交易，没信号就空仓等待',
+    },
+    too_small_position: {
+      name: '仓位过轻',
+      tag: '仓位',
+      tagColor: 'rgba(255,107,26,.3)',
+      desc: '仓位 &lt; 15%，<span class="bad">看对了也没赚到钱</span>，浪费好机会',
+      fix: '<b>建议</b>：高胜率战法（长安/B1）可放到 30-35%',
+    },
+  };
+
+  function classifyErrors(card) {
+    const data = extractCardData(card);
+    const v = data.verdict;
+    // 只分析 wrong 和 partial
+    if (v === 'correct') return [];
+    const issues = [];
+    const text = card.innerText;
+
+    // 1. 追高：J>80 或无信号但有价格高位特征
+    if (data.jVal !== null && data.jVal > 80) issues.push('chase_high');
+    // 2. 仓位过重
+    if (data.position !== null && data.position > 40) issues.push('over_position');
+    // 3. 卖飞：盈利但持仓短/盈利少
+    if (data.profitPct !== null && data.profitPct > 0 && data.profitPct < 8 &&
+        data.holdDays !== null && data.holdDays <= 5) issues.push('sell_too_early');
+    // 卖飞信号
+    if (data.signalType === '卖飞' || (text.includes('卖飞') && v === 'partial')) issues.push('sell_too_early');
+    // 4. 止损太晚
+    if (data.profitPct !== null && data.profitPct < -8) issues.push('stop_loss_late');
+    // 5. 无战法信号
+    if (!data.signalType || data.signalType === '无信号' || data.signalType === '待标注') {
+      if (v === 'wrong') issues.push('no_signal');
+    }
+    // 6. 仓位过轻 + 盈利较大
+    if (data.position !== null && data.position < 15 && data.profitPct !== null && data.profitPct > 10) {
+      issues.push('too_small_position');
+    }
+    // 兜底：wrong 但没匹配上具体模式，归到追高（最常见错误）
+    if (issues.length === 0 && v === 'wrong') issues.push('chase_high');
+    // partial 兜底归到卖飞
+    if (issues.length === 0 && v === 'partial') issues.push('sell_too_early');
+    return issues;
+  }
+
+  function generateDiagnosis(cards) {
+    const diagZone = document.getElementById('diagnosisZone');
+    const diagModes = document.getElementById('diagModes');
+    const diagFix = document.getElementById('diagFix');
+    if (!diagZone) return;
+
+    // 统计每种错误模式的频次 + 涉及股票
+    const stats = {};
+    let totalErrors = 0;
+    cards.forEach(c => {
+      const issues = classifyErrors(c);
+      if (issues.length === 0) return;
+      const data = extractCardData(c);
+      const stockLabel = (data.name || data.tsCode || '').toString();
+      issues.forEach(issue => {
+        if (!stats[issue]) stats[issue] = { count: 0, stocks: new Set() };
+        stats[issue].count++;
+        stats[issue].stocks.add(stockLabel);
+        totalErrors++;
+      });
+    });
+
+    if (totalErrors === 0) {
+      diagZone.classList.remove('show');
+      return;
+    }
+    diagZone.classList.add('show');
+
+    // 按频次排序
+    const sorted = Object.entries(stats).sort((a, b) => b[1].count - a[1].count);
+    const maxCount = sorted[0][1].count;
+    let html = '';
+    sorted.forEach(([key, info], idx) => {
+      const p = ERROR_PATTERNS[key] || { name: key, desc: '其他错误', fix: '', tag: '其他', tagColor: '' };
+      const level = info.count >= maxCount * 0.6 ? 'high' : info.count >= maxCount * 0.3 ? 'mid' : 'low';
+      const barWidth = (info.count / maxCount * 100).toFixed(0);
+      const stocksArr = Array.from(info.stocks).slice(0, 3);
+      const stocksStr = stocksArr.join(' · ') + (info.stocks.size > 3 ? ` 等 ${info.stocks.size} 只` : '');
+      html += `
+        <div class="diag-mode ${level}">
+          <div class="rank">${idx + 1}</div>
+          <div class="info">
+            <div class="name">${p.name}<span class="tag" style="background:${p.tagColor};color:var(--txt)">${p.tag}</span></div>
+            <div class="desc">${p.desc}</div>
+            <div class="stocks">涉及：${stocksStr || '—'}</div>
+          </div>
+          <div class="bar-cell">
+            <div class="count">${info.count}</div>
+            <div class="bar"><i style="width:${barWidth}%"></i></div>
+          </div>
+        </div>
+      `;
+    });
+    diagModes.innerHTML = html;
+
+    // 生成改进路线图（基于 top 3 错误）
+    const top3 = sorted.slice(0, 3).map(([k]) => ERROR_PATTERNS[k]).filter(Boolean);
+    let fixHtml = '<div class="fix-title">IMPROVEMENT ROADMAP · 改进路线图</div><ol>';
+    top3.forEach((p, i) => {
+      fixHtml += `<li>${p.fix}</li>`;
+    });
+    fixHtml += '</ol>';
+    fixHtml += `<div style="margin-top:10px;padding:8px 12px;border-radius:6px;background:rgba(255,179,0,.06);border:1px solid rgba(255,179,0,.2);font-size:12px;color:var(--gold);font-style:italic;line-height:1.6">// Z哥寄语：管不住手的人，永远只能赚小钱。先把这 ${top3.length} 个问题改了，再谈赚钱。</div>`;
+    diagFix.innerHTML = fixHtml;
   }
 
   function setStat(id, value, cls, hint) {
