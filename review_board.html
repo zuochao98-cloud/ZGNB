@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交割单复盘 · Z哥交易终端</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0d0f;
+    --bg-2:#141418;
+    --bg-3:#1a1a20;
+    --panel:#16161c;
+    --line:#26262e;
+    --line-2:#33333d;
+    --txt:#f5f5f7;
+    --txt-2:#8a8a96;
+    --txt-3:#5a5a66;
+    --up:#ff3b30;       /* A股红 涨/盈利 */
+    --down:#00c853;     /* A股绿 跌/亏损 */
+    --gold:#ffb300;     /* 金句金 */
+    --gold-2:#ff8a00;
+    --warn:#ff6b1a;
+    --correct:#00c853;
+    --wrong:#ff3b30;
+    --neutral:#3a8aff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--txt);font-family:"Noto Sans SC","JetBrains Mono",sans-serif;-webkit-font-smoothing:antialiased}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(255,138,0,.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(0,200,83,.05), transparent 60%),
+      var(--bg);
+    background-attachment:fixed;
+  }
+  /* 顶部噪点纹理 */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  .wrap{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:32px 28px 80px}
+
+  /* ========== 顶部 Header ========== */
+  .topbar{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:28px;
+    gap:24px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:16px}
+  .logo{
+    width:46px;height:46px;border-radius:10px;
+    background:linear-gradient(135deg,var(--gold),var(--gold-2));
+    display:grid;place-items:center;font-family:"Bebas Neue";font-size:28px;color:#000;
+    box-shadow:0 6px 24px rgba(255,138,0,.35),inset 0 0 0 1px rgba(255,255,255,.2);
+  }
+  .brand h1{font-family:"Bebas Neue";font-size:38px;letter-spacing:2px;line-height:1}
+  .brand h1 .cn{font-family:"Noto Sans SC";font-weight:900;font-size:22px;letter-spacing:6px;margin-left:10px;color:var(--gold)}
+  .brand .sub{font-size:12px;color:var(--txt-2);letter-spacing:2px;margin-top:6px;font-family:"JetBrains Mono"}
+  .meta{display:flex;gap:18px;align-items:center;font-family:"JetBrains Mono";font-size:12px;color:var(--txt-2)}
+  .meta .dot{width:6px;height:6px;border-radius:50%;background:var(--correct);box-shadow:0 0 10px var(--correct);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ========== 总览仪表盘 ========== */
+  .dashboard{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px;
+  }
+  .stat{
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;
+  }
+  .stat::after{content:"";position:absolute;top:0;left:0;width:3px;height:100%;background:var(--gold)}
+  .stat .label{font-size:11px;color:var(--txt-2);letter-spacing:3px;text-transform:uppercase;font-family:"JetBrains Mono"}
+  .stat .value{font-family:"Bebas Neue";font-size:42px;line-height:1.1;margin-top:8px;letter-spacing:1px}
+  .stat .value.up{color:var(--up)}
+  .stat .value.down{color:var(--down)}
+  .stat .value.neutral{color:var(--neutral)}
+  .stat .hint{font-size:11px;color:var(--txt-3);margin-top:6px;font-family:"JetBrains Mono"}
+
+  /* ========== 区块标题 ========== */
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:40px 0 18px;border-bottom:1px dashed var(--line-2);padding-bottom:12px}
+  .sec-head h2{font-family:"Bebas Neue";font-size:30px;letter-spacing:2px}
+  .sec-head h2 .num{color:var(--gold);font-size:20px;margin-right:10px}
+  .sec-head .cn{font-family:"Noto Sans SC";font-weight:700;font-size:16px;color:var(--txt-2);letter-spacing:3px;margin-left:12px}
+  .sec-head .tag{font-family:"JetBrains Mono";font-size:11px;color:var(--txt-3);letter-spacing:2px}
+
+  /* ========== 交易卡片 ========== */
+  .trades{display:flex;flex-direction:column;gap:18px}
+  .trade{
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    transition:border-color .25s, transform .25s;
+    position:relative;
+  }
+  .trade:hover{border-color:var(--line-2);transform:translateY(-2px)}
+  .trade.correct{border-left:3px solid var(--correct)}
+  .trade.wrong{border-left:3px solid var(--wrong)}
+  .trade.partial{border-left:3px solid var(--warn)}
+
+  .trade-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 22px;border-bottom:1px solid var(--line);gap:16px;flex-wrap:wrap;
+  }
+  .stock{display:flex;align-items:center;gap:14px}
+  .stock .code{
+    font-family:"JetBrains Mono";font-size:11px;color:var(--txt-3);
+    background:var(--bg-3);padding:3px 8px;border-radius:4px;border:1px solid var(--line);
+  }
+  .stock .name{font-size:18px;font-weight:700;letter-spacing:1px}
+  .stock .date{font-family:"JetBrains Mono";font-size:11px;color:var(--txt-2)}
+
+  .verdict{
+    display:flex;align-items:center;gap:8px;
+    font-family:"Bebas Neue";font-size:18px;letter-spacing:2px;
+    padding:5px 12px;border-radius:6px;
+  }
+  .verdict.correct{background:rgba(0,200,83,.12);color:var(--correct);border:1px solid rgba(0,200,83,.3)}
+  .verdict.wrong{background:rgba(255,59,48,.12);color:var(--wrong);border:1px solid rgba(255,59,48,.3)}
+  .verdict.partial{background:rgba(255,107,26,.12);color:var(--warn);border:1px solid rgba(255,107,26,.3)}
+
+  .trade-body{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:0}
+  .cell{padding:16px 22px;border-right:1px solid var(--line)}
+  .cell:last-child{border-right:none}
+  .cell .k{font-size:10px;color:var(--txt-3);letter-spacing:2px;text-transform:uppercase;font-family:"JetBrains Mono";margin-bottom:8px}
+  .row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+  .row .lbl{font-size:11px;color:var(--txt-2);min-width:48px}
+  .row .v{font-family:"JetBrains Mono";font-size:14px;font-weight:500}
+  .v.up{color:var(--up)}
+  .v.down{color:var(--down)}
+  .pill{
+    display:inline-block;font-family:"JetBrains Mono";font-size:10px;
+    padding:2px 8px;border-radius:4px;background:var(--bg-3);border:1px solid var(--line-2);
+    color:var(--txt-2);letter-spacing:1px;
+  }
+  .pill.b1{color:#ffb300;border-color:rgba(255,179,0,.4);background:rgba(255,179,0,.08)}
+  .pill.b2{color:#3a8aff;border-color:rgba(58,138,255,.4);background:rgba(58,138,255,.08)}
+  .pill.b3{color:#bd5cff;border-color:rgba(189,92,255,.4);background:rgba(189,92,255,.08)}
+  .pill.sell{color:#ff6b6b;border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.08)}
+
+  /* Z哥点评 */
+  .zg-review{
+    padding:16px 22px;border-top:1px solid var(--line);
+    background:
+      linear-gradient(90deg, rgba(255,179,0,.06), transparent 60%),
+      var(--bg-3);
+    position:relative;
+  }
+  .zg-review::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);
+  }
+  .zg-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .zg-avatar{
+    width:26px;height:26px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),var(--gold-2));
+    display:grid;place-items:center;font-family:"Bebas Neue";color:#000;font-size:14px;
+  }
+  .zg-name{font-weight:700;font-size:13px;color:var(--gold);letter-spacing:1px}
+  .zg-name .role{font-weight:400;color:var(--txt-3);font-size:11px;margin-left:6px}
+  .zg-text{font-size:14px;line-height:1.85;color:var(--txt);letter-spacing:.3px}
+  .zg-text .hl{color:var(--gold);font-weight:700}
+  .zg-text .strike{color:var(--wrong);font-weight:700}
+  .zg-text .ok{color:var(--correct);font-weight:700}
+  .zg-text .quote{
+    display:block;margin-top:10px;padding:8px 14px;
+    border-left:2px solid var(--gold);background:rgba(255,179,0,.05);
+    font-style:italic;color:var(--gold);font-size:13px;
+  }
+
+  /* ========== 判定标准 ========== */
+  .criteria{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:8px}
+  .crit-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+  }
+  .crit-card .t{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .crit-card .t .ic{
+    width:24px;height:24px;border-radius:6px;display:grid;place-items:center;
+    font-family:"Bebas Neue";font-size:14px;
+  }
+  .crit-card.ok .ic{background:rgba(0,200,83,.15);color:var(--correct)}
+  .crit-card.no .ic{background:rgba(255,59,48,.15);color:var(--wrong)}
+  .crit-card.warn .ic{background:rgba(255,107,26,.15);color:var(--warn)}
+  .crit-card .t h4{font-size:14px;font-weight:700;letter-spacing:1px}
+  .crit-card ul{list-style:none;font-size:12px;color:var(--txt-2);line-height:1.9}
+  .crit-card ul li::before{content:"›";color:var(--gold);margin-right:8px;font-weight:700}
+
+  /* ========== 模式切换 Tab ========== */
+  .mode-tabs{display:flex;align-items:center;gap:0;margin-bottom:14px;border-bottom:1px solid var(--line)}
+  .mode-tab{
+    background:transparent;border:none;color:var(--txt-2);cursor:pointer;
+    font-family:"Bebas Neue";font-size:15px;letter-spacing:2px;padding:10px 18px;
+    border-bottom:2px solid transparent;transition:all .2s;
+  }
+  .mode-tab:hover{color:var(--txt)}
+  .mode-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+  .mode-hint{margin-left:auto;font-size:11px;color:var(--txt-3);font-family:"JetBrains Mono";letter-spacing:1px}
+
+  /* ========== 批量导入区 ========== */
+  .batch-zone{
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line);border-radius:14px;padding:22px 26px;margin-bottom:32px;
+    position:relative;overflow:hidden;
+  }
+  .batch-zone::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--neutral),var(--gold));
+  }
+  .batch-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .batch-upload .bu-title,.batch-help .bu-title{
+    font-family:"Bebas Neue";font-size:16px;color:var(--gold);letter-spacing:2px;margin-bottom:10px;
+  }
+  .bu-drop{
+    position:relative;border:1.5px dashed var(--line-2);border-radius:10px;
+    min-height:140px;display:grid;place-items:center;cursor:pointer;
+    transition:border-color .25s,background .25s;overflow:hidden;
+    background:repeating-linear-gradient(45deg,transparent,transparent 12px,rgba(255,255,255,.012) 12px,rgba(255,255,255,.012) 24px);
+  }
+  .bu-drop:hover{border-color:var(--gold);background:rgba(255,179,0,.04)}
+  .bu-drop.dragover{border-color:var(--gold);background:rgba(255,179,0,.08)}
+  .bu-drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .bu-ph{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:18px}
+  .bu-ic{font-size:30px;color:var(--txt-3);line-height:1}
+  .bu-drop:hover .bu-ic{color:var(--gold)}
+  .bu-text{font-size:13px;color:var(--txt-2);font-family:"JetBrains Mono"}
+  .bu-sub{font-size:10px;color:var(--txt-3);font-family:"JetBrains Mono"}
+  .bu-actions{display:flex;gap:8px;margin-top:12px}
+  .bu-actions .btn{flex:1;font-size:13px;padding:8px 12px}
+
+  .fmt-block{display:flex;flex-direction:column;gap:6px}
+  .fmt-item{
+    font-size:11px;color:var(--txt-2);line-height:1.6;padding:8px 10px;
+    background:var(--bg-3);border-radius:6px;border:1px solid var(--line);
+    font-family:"JetBrains Mono";
+  }
+  .fmt-tag{
+    display:inline-block;font-size:10px;padding:1px 7px;border-radius:3px;
+    margin-right:8px;font-weight:700;letter-spacing:1px;
+  }
+  .fmt-tag.tdx{background:rgba(255,179,0,.15);color:var(--gold);border:1px solid rgba(255,179,0,.3)}
+  .fmt-tag.ths{background:rgba(58,138,255,.15);color:var(--neutral);border:1px solid rgba(58,138,255,.3)}
+  .fmt-tag.dcf{background:rgba(255,59,48,.15);color:var(--up);border:1px solid rgba(255,59,48,.3)}
+  .fmt-tag.std{background:rgba(0,200,83,.15);color:var(--down);border:1px solid rgba(0,200,83,.3)}
+  .bu-tip{
+    margin-top:10px;padding:8px 10px;border-radius:6px;
+    background:rgba(255,179,0,.06);border:1px solid rgba(255,179,0,.2);
+    font-size:11px;color:var(--gold);line-height:1.6;font-family:"JetBrains Mono";
+  }
+
+  /* 预览表格 */
+  .batch-preview{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line-2)}
+  .bp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px}
+  .bp-title{font-family:"JetBrains Mono";font-size:13px;color:var(--txt)}
+  .bp-title b{color:var(--gold)}
+  .bp-actions{display:flex;gap:8px}
+  .bp-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;max-height:380px;overflow-y:auto}
+  .bp-table{width:100%;border-collapse:collapse;font-family:"JetBrains Mono";font-size:12px}
+  .bp-table thead{position:sticky;top:0;z-index:1}
+  .bp-table th{
+    background:var(--bg-3);color:var(--gold);text-align:left;padding:10px 12px;
+    font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--line-2);
+  }
+  .bp-table td{padding:8px 12px;border-bottom:1px solid var(--line);color:var(--txt-2);white-space:nowrap}
+  .bp-table tr:hover td{background:rgba(255,179,0,.03)}
+  .bp-table .v.up{color:var(--up)}
+  .bp-table .v.down{color:var(--down)}
+  .bp-table .badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700}
+  .bp-table .badge.buy{background:var(--up);color:#fff}
+  .bp-table .badge.sell{background:var(--down);color:#fff}
+  .bp-table .row-num{color:var(--txt-3);text-align:center}
+
+  @media(max-width:900px){
+    .batch-grid{grid-template-columns:1fr}
+  }
+
+  /* ========== 录入表单 ========== */
+  .form-zone{
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:32px;
+    position:relative;overflow:hidden;
+  }
+  .form-zone::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--gold),var(--gold-2),var(--up));
+  }
+  .form-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+  .form-head h3{font-family:"Bebas Neue";font-size:24px;letter-spacing:2px}
+  .form-head h3 .cn{font-family:"Noto Sans SC";font-weight:700;font-size:14px;color:var(--gold);letter-spacing:3px;margin-left:10px}
+  .form-head .hint{font-size:11px;color:var(--txt-3);font-family:"JetBrains Mono";letter-spacing:1px}
+  .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.full{grid-column:1/-1}
+  .field.wide{grid-column:span 2}
+  .field label{
+    font-size:10px;color:var(--txt-3);letter-spacing:2px;text-transform:uppercase;
+    font-family:"JetBrains Mono";display:flex;align-items:center;gap:6px;
+  }
+  .field label .req{color:var(--wrong);font-size:10px}
+  .field input,.field select,.field textarea{
+    background:var(--bg-3);border:1px solid var(--line);border-radius:6px;
+    padding:10px 12px;color:var(--txt);font-family:"JetBrains Mono";font-size:13px;
+    transition:border-color .2s,background .2s;outline:none;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{
+    border-color:var(--gold);background:var(--bg-2);
+  }
+  .field textarea{resize:vertical;min-height:60px;font-family:"Noto Sans SC"}
+  .field select{cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23ffb300' fill='none' stroke-width='1.5'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;
+  }
+  .field select option{background:var(--bg-2)}
+  .seg{display:flex;gap:0;background:var(--bg-3);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg label{flex:1;cursor:pointer;padding:10px 8px;text-align:center;font-size:12px;color:var(--txt-2);letter-spacing:1px;transition:all .2s;font-family:"JetBrains Mono";border:none;margin:0}
+  .seg label:not(:last-child){border-right:1px solid var(--line)}
+  .seg input{display:none}
+  .seg input:checked + span{color:var(--bg);background:var(--gold);display:block;margin:-10px -8px;padding:10px 8px;font-weight:700}
+  .seg label span{display:block}
+  .form-actions{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-top:18px;padding-top:18px;border-top:1px dashed var(--line-2);flex-wrap:wrap;
+  }
+  .btn{
+    font-family:"Bebas Neue";font-size:16px;letter-spacing:2px;
+    padding:10px 22px;border:none;border-radius:6px;cursor:pointer;
+    transition:all .2s;display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn.primary{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#000}
+  .btn.primary:hover{box-shadow:0 6px 20px rgba(255,179,0,.4);transform:translateY(-1px)}
+  .btn.ghost{background:transparent;color:var(--txt-2);border:1px solid var(--line-2)}
+  .btn.ghost:hover{color:var(--txt);border-color:var(--txt-2)}
+  .calc-tag{
+    font-family:"JetBrains Mono";font-size:11px;color:var(--neutral);
+    padding:6px 10px;background:rgba(58,138,255,.08);border:1px solid rgba(58,138,255,.2);
+    border-radius:4px;
+  }
+  .calc-tag b{color:var(--gold)}
+
+  /* ========== K线图上传 ========== */
+  .kline-zone{
+    grid-column:1/-1;padding:14px 22px;border-top:1px solid var(--line);
+    background:var(--bg-3);
+  }
+  .kline-zone .k{font-size:10px;color:var(--txt-3);letter-spacing:2px;text-transform:uppercase;font-family:"JetBrains Mono";margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+  .kline-drop{
+    position:relative;border:1.5px dashed var(--line-2);border-radius:10px;
+    min-height:120px;display:grid;place-items:center;
+    color:var(--txt-3);font-size:12px;font-family:"JetBrains Mono";letter-spacing:1px;
+    cursor:pointer;transition:border-color .25s,background .25s;overflow:hidden;
+    background:repeating-linear-gradient(45deg,transparent,transparent 12px,rgba(255,255,255,.012) 12px,rgba(255,255,255,.012) 24px);
+  }
+  .kline-drop:hover{border-color:var(--gold);color:var(--gold);background:rgba(255,179,0,.04)}
+  .kline-drop.dragover{border-color:var(--gold);background:rgba(255,179,0,.08);color:var(--gold)}
+  .kline-drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .kline-drop .ph{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:20px}
+  .kline-drop .ph .ic{font-size:28px;color:var(--txt-3);line-height:1}
+  .kline-drop:hover .ph .ic{color:var(--gold)}
+  .kline-preview{position:relative;width:100%}
+  .kline-preview img{width:100%;max-height:380px;object-fit:contain;border-radius:8px;display:block;background:#0a0a0c}
+  .kline-preview .bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 0 0;font-family:"JetBrains Mono";font-size:11px;color:var(--txt-2);
+  }
+  .kline-preview .bar .name{color:var(--gold)}
+  .kline-preview .remove{
+    background:rgba(255,59,48,.12);color:var(--wrong);border:1px solid rgba(255,59,48,.3);
+    padding:3px 10px;border-radius:4px;cursor:pointer;font-size:10px;letter-spacing:1px;
+    font-family:"JetBrains Mono";transition:background .2s;
+  }
+  .kline-preview .remove:hover{background:rgba(255,59,48,.25)}
+  .upload-hint{
+    margin-top:10px;padding:8px 12px;border-radius:6px;
+    background:rgba(58,138,255,.06);border:1px solid rgba(58,138,255,.2);
+    font-size:11px;color:var(--neutral);line-height:1.6;font-family:"JetBrains Mono";
+  }
+  .upload-hint b{color:var(--gold)}
+
+  /* 深度复盘按钮 + 详细分析区 */
+  .deep-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    background:linear-gradient(135deg,rgba(255,179,0,.15),rgba(255,138,0,.1));
+    border:1px solid rgba(255,179,0,.4);color:var(--gold);
+    padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;
+    font-family:"JetBrains Mono";letter-spacing:1px;transition:all .2s;
+  }
+  .deep-btn:hover{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#000}
+  .deep-btn.done{color:var(--down);border-color:rgba(0,200,83,.4);background:rgba(0,200,83,.08)}
+  .deep-btn.done:hover{background:rgba(0,200,83,.15);color:var(--down)}
+  .deep-analysis{
+    margin-top:12px;padding:14px 18px;border-radius:8px;
+    background:linear-gradient(135deg,rgba(255,179,0,.05),rgba(0,0,0,.2));
+    border:1px solid rgba(255,179,0,.2);border-left:3px solid var(--gold);
+    font-size:13px;line-height:1.85;color:var(--txt);display:none;
+  }
+  .deep-analysis.show{display:block;animation:fadeIn .4s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .deep-analysis .da-title{
+    font-family:"Bebas Neue";color:var(--gold);font-size:14px;letter-spacing:2px;
+    margin-bottom:10px;display:flex;align-items:center;gap:8px;
+  }
+  .deep-analysis .da-title::before{content:"◆";font-size:10px}
+  .deep-analysis .da-row{margin-bottom:8px;padding-left:14px;position:relative}
+  .deep-analysis .da-row::before{content:"›";position:absolute;left:0;color:var(--gold);font-weight:700}
+  .deep-analysis .da-row b{color:var(--gold)}
+  .deep-analysis .da-row .bad{color:var(--wrong);font-weight:700}
+  .deep-analysis .da-row .good{color:var(--down);font-weight:700}
+  .deep-analysis .da-quote{
+    margin-top:10px;padding:8px 12px;border-left:2px solid var(--gold);
+    background:rgba(255,179,0,.05);color:var(--gold);font-style:italic;font-size:12px;
+  }
+
+  /* 一键深度复盘浮动按钮 */
+  .bulk-deep{
+    position:fixed;right:24px;bottom:24px;z-index:50;
+    background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#000;
+    padding:14px 22px;border-radius:50px;border:none;cursor:pointer;
+    font-family:"Bebas Neue";font-size:16px;letter-spacing:2px;
+    box-shadow:0 8px 28px rgba(255,179,0,.45);transition:all .25s;
+    display:none;align-items:center;gap:8px;
+  }
+  .bulk-deep.show{display:inline-flex;animation:popIn .3s}
+  .bulk-deep:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(255,179,0,.6)}
+  .bulk-deep .count{
+    background:rgba(0,0,0,.25);color:#fff;padding:1px 8px;border-radius:10px;
+    font-size:12px;font-family:"JetBrains Mono";
+  }
+  @keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* 综合评估总结区 */
+  .summary-zone{
+    margin-top:36px;padding:26px 30px;border-radius:14px;
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line-2);position:relative;overflow:hidden;
+  }
+  .summary-zone::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--up),var(--gold),var(--down));
+  }
+  .summary-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+  .summary-head h2{font-family:"Bebas Neue";font-size:28px;letter-spacing:2px}
+  .summary-head h2 .cn{font-family:"Noto Sans SC";font-weight:700;font-size:16px;color:var(--gold);letter-spacing:3px;margin-left:10px}
+  .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .summary-verdict{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;
+  }
+  .sv-card{
+    padding:14px 18px;border-radius:10px;border:1px solid var(--line);
+    background:var(--bg-3);text-align:center;
+  }
+  .sv-card.ok{border-color:rgba(0,200,83,.3);background:rgba(0,200,83,.05)}
+  .sv-card.no{border-color:rgba(255,59,48,.3);background:rgba(255,59,48,.05)}
+  .sv-card.warn{border-color:rgba(255,107,26,.3);background:rgba(255,107,26,.05)}
+  .sv-card .sv-label{font-size:10px;color:var(--txt-3);letter-spacing:2px;font-family:"JetBrains Mono";text-transform:uppercase}
+  .sv-card .sv-value{font-family:"Bebas Neue";font-size:32px;line-height:1.1;margin-top:6px}
+  .sv-card.ok .sv-value{color:var(--down)}
+  .sv-card.no .sv-value{color:var(--up)}
+  .sv-card.warn .sv-value{color:var(--warn)}
+  .summary-zg{
+    padding:18px 22px;border-radius:10px;
+    background:linear-gradient(90deg,rgba(255,179,0,.08),transparent 70%);
+    border-left:3px solid var(--gold);
+  }
+  .summary-zg .zg-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .summary-zg .zg-text{font-size:14px;line-height:1.9;color:var(--txt)}
+  .summary-zg .zg-text b{color:var(--gold)}
+  .summary-zg .zg-text .good{color:var(--down);font-weight:700}
+  .summary-zg .zg-text .bad{color:var(--up);font-weight:700}
+  @media(max-width:900px){.summary-grid{grid-template-columns:repeat(2,1fr)}.summary-verdict{grid-template-columns:1fr}}
+
+  /* ========== 错误模式诊断 ========== */
+  .diagnosis-zone{
+    margin-top:20px;padding:22px 26px;border-radius:12px;
+    background:linear-gradient(135deg,rgba(255,59,48,.04),var(--bg-3));
+    border:1px solid rgba(255,59,48,.25);border-left:3px solid var(--up);
+    display:none;
+  }
+  .diagnosis-zone.show{display:block;animation:fadeIn .4s}
+  .diag-head{
+    display:flex;align-items:center;gap:10px;margin-bottom:14px;
+    padding-bottom:10px;border-bottom:1px dashed rgba(255,59,48,.2);
+  }
+  .diag-head .ic{
+    width:28px;height:28px;border-radius:6px;display:grid;place-items:center;
+    background:rgba(255,59,48,.15);color:var(--up);font-family:"Bebas Neue";font-size:16px;
+  }
+  .diag-head h3{font-family:"Bebas Neue";font-size:20px;letter-spacing:2px;color:var(--up)}
+  .diag-head h3 .cn{font-family:"Noto Sans SC";font-weight:700;font-size:13px;color:var(--gold);letter-spacing:2px;margin-left:8px}
+  .diag-head .desc{margin-left:auto;font-size:11px;color:var(--txt-3);font-family:"JetBrains Mono";letter-spacing:1px}
+
+  /* 错误模式列表 */
+  .diag-modes{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+  .diag-mode{
+    display:grid;grid-template-columns:30px 1fr 70px;gap:14px;align-items:center;
+    padding:12px 16px;border-radius:8px;background:var(--bg-3);border:1px solid var(--line);
+    transition:all .2s;
+  }
+  .diag-mode.high{border-color:rgba(255,59,48,.4);background:rgba(255,59,48,.05)}
+  .diag-mode.mid{border-color:rgba(255,107,26,.4);background:rgba(255,107,26,.05)}
+  .diag-mode.low{border-color:var(--line)}
+  .diag-mode .rank{
+    font-family:"Bebas Neue";font-size:24px;color:var(--txt-3);text-align:center;line-height:1;
+  }
+  .diag-mode.high .rank{color:var(--up)}
+  .diag-mode.mid .rank{color:var(--warn)}
+  .diag-mode .info .name{font-weight:700;font-size:14px;color:var(--txt);margin-bottom:3px}
+  .diag-mode .info .name .tag{
+    display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;
+    margin-left:8px;font-family:"JetBrains Mono";letter-spacing:1px;
+  }
+  .diag-mode .info .desc{font-size:12px;color:var(--txt-2);line-height:1.6}
+  .diag-mode .info .desc b{color:var(--gold)}
+  .diag-mode .info .desc .bad{color:var(--up);font-weight:700}
+  .diag-mode .info .stocks{font-size:11px;color:var(--txt-3);margin-top:4px;font-family:"JetBrains Mono"}
+  .diag-mode .bar-cell{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .diag-mode .count{font-family:"Bebas Neue";font-size:22px;color:var(--up);line-height:1}
+  .diag-mode.mid .count{color:var(--warn)}
+  .diag-mode.low .count{color:var(--txt-2)}
+  .diag-mode .bar{
+    width:60px;height:4px;background:var(--bg);border-radius:2px;overflow:hidden;
+  }
+  .diag-mode .bar i{display:block;height:100%;background:var(--up);transition:width .5s}
+  .diag-mode.mid .bar i{background:var(--warn)}
+  .diag-mode.low .bar i{background:var(--txt-3)}
+
+  /* 改进路线图 */
+  .diag-fix{
+    margin-top:16px;padding:14px 18px;border-radius:8px;
+    background:linear-gradient(90deg,rgba(0,200,83,.06),transparent 70%);
+    border-left:3px solid var(--down);
+  }
+  .diag-fix .fix-title{
+    font-family:"Bebas Neue";font-size:14px;color:var(--down);letter-spacing:2px;
+    margin-bottom:8px;display:flex;align-items:center;gap:8px;
+  }
+  .diag-fix .fix-title::before{content:"◆";font-size:10px}
+  .diag-fix ol{margin:0;padding-left:18px;font-size:13px;color:var(--txt);line-height:1.9}
+  .diag-fix ol li b{color:var(--down)}
+  .diag-fix ol li .bad{color:var(--up);font-weight:700}
+  @media(max-width:900px){.diag-mode{grid-template-columns:24px 1fr 50px}}
+
+  /* ========== 黑话词典 ========== */
+  .jargon{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;
+  }
+  .j-item{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:6px;background:var(--bg-3)}
+  .j-item .term{font-family:"JetBrains Mono";font-size:12px;color:var(--gold);font-weight:700}
+  .j-item .def{font-size:11px;color:var(--txt-2);line-height:1.5}
+
+  /* ========== 底部金句 ========== */
+  .closing{
+    margin-top:40px;padding:28px 32px;border-radius:14px;
+    background:
+      linear-gradient(135deg, rgba(255,179,0,.1), rgba(255,59,48,.06)),
+      var(--panel);
+    border:1px solid var(--line-2);position:relative;overflow:hidden;
+  }
+  .closing::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(400px 200px at 90% 0%, rgba(255,179,0,.15), transparent 70%);
+    pointer-events:none;
+  }
+  .closing .label{font-family:"JetBrains Mono";font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase}
+  .closing .saying{
+    font-size:22px;font-weight:700;line-height:1.6;margin-top:10px;letter-spacing:1px;
+    position:relative;
+  }
+  .closing .sign{display:block;margin-top:14px;font-family:"Bebas Neue";font-size:16px;color:var(--gold);letter-spacing:2px}
+
+  .footer{margin-top:48px;text-align:center;font-size:11px;color:var(--txt-3);font-family:"JetBrains Mono";letter-spacing:1px;line-height:1.8}
+  .footer .disclaimer{color:var(--warn);margin-top:6px}
+
+  @media(max-width:900px){
+    .dashboard{grid-template-columns:repeat(2,1fr)}
+    .trade-body{grid-template-columns:1fr}
+    .cell{border-right:none;border-bottom:1px solid var(--line)}
+    .criteria{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== 顶部 Header ========== -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">Z</div>
+      <div>
+        <h1>REVIEW BOARD<span class="cn">交割单复盘</span></h1>
+        <div class="sub">// zettaranc trading terminal · post-trade diagnosis</div>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="dot"></span>
+      <span>复盘周期：2026.04.21 — 2026.08.21</span>
+      <span>|</span>
+      <span>生成于 2026-08-21 15:42</span>
+    </div>
+  </div>
+
+  <!-- ========== 总览仪表盘 ========== -->
+  <div class="dashboard">
+    <div class="stat">
+      <div class="label">总交易笔数</div>
+      <div class="value neutral">04</div>
+      <div class="hint">含 3 完整交易 / 1 持仓中</div>
+    </div>
+    <div class="stat">
+      <div class="label">综合胜率</div>
+      <div class="value up">75<span style="font-size:24px">%</span></div>
+      <div class="hint">3/4 笔按战法判定为正确</div>
+    </div>
+    <div class="stat">
+      <div class="label">累计盈亏</div>
+      <div class="value up">+9.7<span style="font-size:24px">%</span></div>
+      <div class="hint">加权收益率（按仓位）</div>
+    </div>
+    <div class="stat">
+      <div class="label">平均持仓</div>
+      <div class="value neutral">14<span style="font-size:24px">天</span></div>
+      <div class="hint">最长 28 天 / 最短 3 天</div>
+    </div>
+  </div>
+
+  <!-- ========== 录入表单 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">00</span>NEW TRADE<span class="cn">录入交易</span></h2>
+    <span class="tag">手动填写 · 提交后自动生成复盘卡片</span>
+  </div>
+  <div class="mode-tabs">
+    <button type="button" class="mode-tab active" data-mode="manual">单笔录入 / MANUAL</button>
+    <button type="button" class="mode-tab" data-mode="batch">批量导入 / BATCH IMPORT</button>
+    <span class="mode-hint" id="modeHint">支持通达信 / 同花顺 / 东方财富 CSV 导出文件</span>
+  </div>
+
+  <!-- 批量导入区 -->
+  <div id="batchZone" class="batch-zone" style="display:none">
+    <div class="batch-grid">
+      <div class="batch-upload">
+        <div class="bu-title">上传交割单</div>
+        <div class="bu-drop" id="csvDrop">
+          <input type="file" id="csvFile" accept=".csv,text/csv,text/comma-separated-values,application/vnd.ms-excel">
+          <div class="bu-ph">
+            <div class="bu-ic">⬆</div>
+            <div class="bu-text">点击或拖拽 CSV 文件</div>
+            <div class="bu-sub">从通达信/同花顺/东财导出的交割单 · 限 2MB</div>
+          </div>
+        </div>
+        <div class="bu-actions">
+          <button type="button" class="btn ghost" id="downloadTpl">下载模板</button>
+          <button type="button" class="btn primary" id="parseBtn" disabled>解析并预览</button>
+        </div>
+      </div>
+      <div class="batch-help">
+        <div class="bu-title">支持的格式</div>
+        <div class="fmt-block">
+          <div class="fmt-item"><span class="fmt-tag tdx">通达信</span> 成交日期 / 股票代码 / 股票名称 / 买卖方向 / 成交价格 / 成交数量 / 成交金额</div>
+          <div class="fmt-item"><span class="fmt-tag ths">同花顺</span> 日期 / 代码 / 名称 / 操作 / 价格 / 数量 / 金额</div>
+          <div class="fmt-item"><span class="fmt-tag dcf">东财</span> 交易日期 / 证券代码 / 证券名称 / 买卖方向 / 成交均价 / 成交数量 / 成交金额</div>
+          <div class="fmt-item"><span class="fmt-tag std">通用</span> date / ts_code / name / action / price / quantity / amount</div>
+        </div>
+        <div class="bu-tip">提示：方向字段自动识别"买入/卖出/买/卖/Buy/Sell/B/S"。代码自动补 .SH/.SZ 后缀。</div>
+      </div>
+    </div>
+
+    <div class="batch-preview" id="batchPreview" style="display:none">
+      <div class="bp-head">
+        <span class="bp-title">解析预览 · 共 <b id="batchCount">0</b> 条记录</span>
+        <div class="bp-actions">
+          <button type="button" class="btn ghost" id="clearBatch">清空</button>
+          <button type="button" class="btn primary" id="importBtn">一键导入生成复盘</button>
+        </div>
+      </div>
+      <div class="bp-table-wrap">
+        <table class="bp-table" id="bpTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 单笔录入表单 -->
+  <form id="tradeForm" class="form-zone" autocomplete="off">
+    <div class="form-grid">
+
+      <div class="field">
+        <label>股票代码 <span class="req">*</span></label>
+        <input type="text" name="ts_code" placeholder="600519.SH" required pattern="\d{6}\.[SH|SZ]">
+      </div>
+      <div class="field">
+        <label>股票名称 <span class="req">*</span></label>
+        <input type="text" name="name" placeholder="贵州茅台" required>
+      </div>
+      <div class="field">
+        <label>交易日期 <span class="req">*</span></label>
+        <input type="date" name="trade_date" required>
+      </div>
+      <div class="field">
+        <label>买卖方向 <span class="req">*</span></label>
+        <div class="seg">
+          <label><input type="radio" name="action" value="BUY" checked><span>BUY 买入</span></label>
+          <label><input type="radio" name="action" value="SELL"><span>SELL 卖出</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>价格（元） <span class="req">*</span></label>
+        <input type="number" name="price" step="0.01" min="0" placeholder="1685.00" required>
+      </div>
+      <div class="field">
+        <label>数量（股） <span class="req">*</span></label>
+        <input type="number" name="quantity" step="100" min="100" placeholder="1000" required>
+      </div>
+      <div class="field">
+        <label>金额（自动计算）</label>
+        <input type="text" name="amount" placeholder="自动计算" readonly>
+      </div>
+      <div class="field">
+        <label>仓位占比（%）</label>
+        <input type="number" name="position" step="1" min="0" max="100" placeholder="30">
+      </div>
+
+      <div class="field">
+        <label>战法信号</label>
+        <select name="signal_type">
+          <option value="">无 / 自由买入</option>
+          <option value="B1">B1 · J值&lt;-10 买点</option>
+          <option value="B2">B2 · 放量突破</option>
+          <option value="B3">B3 · 分歧转一致</option>
+          <option value="SB1">SB1 · 超级B1 震仓</option>
+          <option value="长安战法">长安战法 · 三日确认</option>
+          <option value="S1">S1 · 放量大跌卖出</option>
+          <option value="S2">S2 · 防卖飞预警</option>
+          <option value="S3">S3 · 最后逃生</option>
+          <option value="四块砖">四块砖 · 连4红减半</option>
+          <option value="卤煮">卤煮 · 落袋为安</option>
+          <option value="止损">止损 · 被动离场</option>
+          <option value="卖飞">卖飞 · 卖后大涨</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>J 值</label>
+        <input type="number" name="j_value" step="0.1" placeholder="-12.3">
+      </div>
+      <div class="field">
+        <label>防卖飞评分 /5</label>
+        <input type="number" name="sell_score" step="1" min="0" max="5" placeholder="2">
+      </div>
+      <div class="field">
+        <label>战法评分 /5</label>
+        <input type="number" name="strat_score" step="1" min="0" max="5" placeholder="5">
+      </div>
+
+      <!-- 卖出时显示 -->
+      <div class="field" id="sellOnlyFields" style="display:none">
+        <label>对应买入价（元）</label>
+        <input type="number" name="buy_price" step="0.01" min="0" placeholder="用于计算盈亏">
+      </div>
+      <div class="field" id="sellOnlyFields2" style="display:none">
+        <label>持仓天数</label>
+        <input type="number" name="holding_days" step="1" min="1" placeholder="18">
+      </div>
+      <div class="field wide">
+        <label>交易理由 / 复盘备注</label>
+        <textarea name="reason" placeholder="为什么买/卖？当时的市场判断、心理状态、事后反思..."></textarea>
+      </div>
+      <div class="field wide">
+        <label>K线截图（可选）</label>
+        <input type="file" name="kline_img" accept="image/png,image/jpeg" style="padding:8px">
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <div class="calc-tag" id="liveCalc">金额：<b>—</b>　|　仓位 <b>未填</b></div>
+      <div style="display:flex;gap:10px">
+        <button type="button" class="btn ghost" id="resetBtn">CLEAR 清空</button>
+        <button type="submit" class="btn primary">SUBMIT 提交复盘</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- ========== 交易复盘列表 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">01</span>TRADE LOG<span class="cn">逐笔复盘</span></h2>
+    <span class="tag">按战法匹配 / 买卖点 / 仓位纪律 综合判定</span>
+  </div>
+
+  <div class="trades">
+
+    <!-- 交易 1：贵州茅台 - 正确 -->
+    <div class="trade correct">
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">600519.SH</span>
+          <span class="name">贵州茅台</span>
+          <span class="date">买 2026.07.14 → 卖 2026.08.01</span>
+        </div>
+        <div class="verdict correct">CORRECT · 教科书</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">买入 / ENTRY</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥1685.00</span></div>
+          <div class="row"><span class="lbl">仓位</span><span class="v">30%</span></div>
+          <div class="row"><span class="lbl">信号</span><span class="pill b1">B1</span><span class="pill">J值-12.3</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">卖出 / EXIT</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥1887.20</span></div>
+          <div class="row"><span class="lbl">盈亏</span><span class="v up">+12.0%</span></div>
+          <div class="row"><span class="lbl">持仓</span><span class="v">18 天</span></div>
+          <div class="row"><span class="lbl">类型</span><span class="pill sell">卤煮</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">战法匹配 / STRATEGY</div>
+          <div class="row"><span class="pill b1">B1 买点</span><span class="pill">S1 逃顶</span></div>
+          <div class="row"><span class="lbl">评分</span><span class="v up">5/5</span></div>
+          <div class="row"><span class="lbl">防卖飞</span><span class="v">2/5（安全）</span></div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">
+          这笔我给你打 <span class="ok">满分</span>。J值-12.3 进的场，B1 信号确认，仓位压到三成，<span class="hl">节奏感是对的</span>。18 天卤煮 12 个点，没贪、没恋战，S1 信号一出就走人——这就是少妇战法里讲的"该走就走，别等回头"。
+          <span class="quote">"赚钱的交易都是相似的，亏钱的交易各有各的死法。"</span>
+        </div>
+      </div>
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">点击或拖拽上传 · 支持 PNG/JPG</span></div>
+        <div class="kline-drop">
+          <input type="file" accept="image/png,image/jpeg" data-stock="600519.SH">
+          <div class="ph"><div class="ic">⬆</div><div>上传贵州茅台 K线截图</div><div style="font-size:10px">建议标注买卖点位置</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交易 2：宁德时代 - 错误 -->
+    <div class="trade wrong">
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">300750.SZ</span>
+          <span class="name">宁德时代</span>
+          <span class="date">买 2026.07.22 → 卖 2026.07.25</span>
+        </div>
+        <div class="verdict wrong">WRONG · 追高</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">买入 / ENTRY</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥218.50</span></div>
+          <div class="row"><span class="lbl">仓位</span><span class="v">40%</span></div>
+          <div class="row"><span class="lbl">信号</span><span class="pill">无战法</span><span class="pill">J值 98</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">卖出 / EXIT</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥201.00</span></div>
+          <div class="row"><span class="lbl">盈亏</span><span class="v down">-8.0%</span></div>
+          <div class="row"><span class="lbl">持仓</span><span class="v">3 天</span></div>
+          <div class="row"><span class="lbl">类型</span><span class="pill sell">止损</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">战法匹配 / STRATEGY</div>
+          <div class="row"><span class="pill">无匹配</span></div>
+          <div class="row"><span class="lbl">评分</span><span class="v down">1/5</span></div>
+          <div class="row"><span class="lbl">问题</span><span class="v down">追高 / 重仓</span></div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">
+          这笔 <span class="strike">典型的死法</span>。J 值 98 你还往里冲？这不叫 B1，这叫"接飞刀"。仓位直接干到四成，<span class="strike">哪来的底气</span>？三天止损 8 个点，算你跑得快，不然就是个深套。<span class="hl">记住：没信号的交易，就是赌博。</span>
+          <span class="quote">"市场不缺机会，缺的是管住手。"</span>
+        </div>
+      </div>
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">点击或拖拽上传 · 支持 PNG/JPG</span></div>
+        <div class="kline-drop">
+          <input type="file" accept="image/png,image/jpeg" data-stock="300750.SZ">
+          <div class="ph"><div class="ic">⬆</div><div>上传宁德时代 K线截图</div><div style="font-size:10px">看看追高位置有多离谱</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交易 3：比亚迪 - 部分/可惜 -->
+    <div class="trade partial">
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">002594.SZ</span>
+          <span class="name">比亚迪</span>
+          <span class="date">买 2026.06.10 → 卖 2026.06.20</span>
+        </div>
+        <div class="verdict partial">PARTIAL · 卖飞</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">买入 / ENTRY</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥235.00</span></div>
+          <div class="row"><span class="lbl">仓位</span><span class="v">25%</span></div>
+          <div class="row"><span class="lbl">信号</span><span class="pill b2">B2</span><span class="pill">放量突破</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">卖出 / EXIT</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥246.75</span></div>
+          <div class="row"><span class="lbl">盈亏</span><span class="v up">+5.0%</span></div>
+          <div class="row"><span class="lbl">持仓</span><span class="v">10 天</span></div>
+          <div class="row"><span class="lbl">类型</span><span class="pill sell">卖飞</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">战法匹配 / STRATEGY</div>
+          <div class="row"><span class="pill b2">B2 买点</span><span class="pill">过早离场</span></div>
+          <div class="row"><span class="lbl">评分</span><span class="v">3/5</span></div>
+          <div class="row"><span class="lbl">后续</span><span class="v down">再涨 14%</span></div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">
+          买点没问题，B2 放量突破进的，<span class="ok">进场是对的</span>。但卖出这手<span class="strike">太急</span>了。盈利 5% 就跑，结果后面又涨了 14 个点——这就是典型的<span class="hl">卖飞</span>。防卖飞评分 4/5 的时候你该减半仓，不是全跑。下次记住：<span class="hl">趋势没坏，就让利润奔跑。</span>
+          <span class="quote">"卖飞比亏钱更难受，但管不住手的人，永远只能赚小钱。"</span>
+        </div>
+      </div>
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">点击或拖拽上传 · 支持 PNG/JPG</span></div>
+        <div class="kline-drop">
+          <input type="file" accept="image/png,image/jpeg" data-stock="002594.SZ">
+          <div class="ph"><div class="ic">⬆</div><div>上传比亚迪 K线截图</div><div style="font-size:10px">标注卖出点 vs 后续涨幅</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交易 4：中国平安 - 正确 -->
+    <div class="trade correct">
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">601318.SH</span>
+          <span class="name">中国平安</span>
+          <span class="date">买 2026.05.18 → 卖 2026.06.15</span>
+        </div>
+        <div class="verdict correct">CORRECT · 长安战法</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">买入 / ENTRY</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥48.20</span></div>
+          <div class="row"><span class="lbl">仓位</span><span class="v">35%</span></div>
+          <div class="row"><span class="lbl">信号</span><span class="pill b3">B3</span><span class="pill">长安战法</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">卖出 / EXIT</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥56.85</span></div>
+          <div class="row"><span class="lbl">盈亏</span><span class="v up">+17.9%</span></div>
+          <div class="row"><span class="lbl">持仓</span><span class="v">28 天</span></div>
+          <div class="row"><span class="lbl">类型</span><span class="pill sell">卤煮</span></div>
+        </div>
+        <div class="cell">
+          <div class="k">战法匹配 / STRATEGY</div>
+          <div class="row"><span class="pill b3">B3 买点</span><span class="pill">S2 防卖飞</span></div>
+          <div class="row"><span class="lbl">评分</span><span class="v up">5/5</span></div>
+          <div class="row"><span class="lbl">纪律</span><span class="v up">分批止盈</span></div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">
+          长安战法，三日确认，胜率本来就七成五往上，你这笔<span class="ok">打满了</span>。B3 分歧转一致的节点进的，28 天拿住没动摇，S2 信号出现才分批止盈——<span class="hl">这就是教科书</span>。17.9 个点，节奏、纪律、仓位三件套齐活。多来几笔这样的，你就不需要问我了。
+          <span class="quote">"交易这行，靠的不是聪明，是纪律。"</span>
+        </div>
+      </div>
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">点击或拖拽上传 · 支持 PNG/JPG</span></div>
+        <div class="kline-drop">
+          <input type="file" accept="image/png,image/jpeg" data-stock="601318.SH">
+          <div class="ph"><div class="ic">⬆</div><div>上传中国平安 K线截图</div><div style="font-size:10px">完整趋势 + B3/S2 节点</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== K线图使用说明 ========== -->
+  <div class="upload-hint">
+    <b>// UPLOAD GUIDE</b>　每张交易卡片底部设有上传区，<b>点击</b>选择文件或<b>拖拽</b> K线截图即可嵌入。图片仅在本地浏览器预览，<b>不上传任何服务器</b>，刷新页面即清除。
+    建议从交易软件（同花顺/通达信/东方财富）截取包含买入点、卖出点、技术指标窗口的完整 K 线图，便于复盘时直观对照买卖时机。
+  </div>
+
+  <!-- ========== 判定标准 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">02</span>CRITERIA<span class="cn">判定标准</span></h2>
+    <span class="tag">基于战法匹配 / 买卖点纪律 / 仓位铁律</span>
+  </div>
+  <div class="criteria">
+    <div class="crit-card ok">
+      <div class="t"><div class="ic">✓</div><h4>正确交易 / CORRECT</h4></div>
+      <ul>
+        <li>买点符合 B1/B2/B3/SB1 战法信号</li>
+        <li>J 值、BBI、量比位置确认时机</li>
+        <li>卖出执行 S1/S2/S3 逃顶纪律</li>
+        <li>仓位符合三层防火墙（≤40%）</li>
+        <li>有明确止损/止盈规则并执行</li>
+      </ul>
+    </div>
+    <div class="crit-card no">
+      <div class="t"><div class="ic">✕</div><h4>错误交易 / WRONG</h4></div>
+      <ul>
+        <li>无战法信号追高买入（J 值 &gt; 80）</li>
+        <li>仓位超过铁律上限（&gt;40%）</li>
+        <li>未设止损被深套后被动割肉</li>
+        <li>违反"少妇战法"频繁交易</li>
+        <li>情绪化操作 / 听消息买卖</li>
+      </ul>
+    </div>
+    <div class="crit-card warn">
+      <div class="t"><div class="ic">△</div><h4>部分正确 / PARTIAL</h4></div>
+      <ul>
+        <li>买点对但卖点过早（卖飞）</li>
+        <li>买点对但仓位过轻错失主升</li>
+        <li>未按战法分批止盈</li>
+        <li>趋势未坏提前离场</li>
+        <li>需结合后续行情二次判定</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ========== 黑话词典 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">03</span>JARGON<span class="cn">黑话词典</span></h2>
+    <span class="tag">复盘术语对照表</span>
+  </div>
+  <div class="jargon">
+    <div class="j-item"><span class="term">卤煮</span><span class="def">落袋为安，赚钱后卖出</span></div>
+    <div class="j-item"><span class="term">建仓</span><span class="def">试探性买入，轻仓</span></div>
+    <div class="j-item"><span class="term">卖飞</span><span class="def">卖出后股价继续大涨</span></div>
+    <div class="j-item"><span class="term">B1</span><span class="def">买点1，J值&lt;-10 的买入信号</span></div>
+    <div class="j-item"><span class="term">B2</span><span class="def">买点2，放量突破确认</span></div>
+    <div class="j-item"><span class="term">B3</span><span class="def">买点3，分歧转一致中继</span></div>
+    <div class="j-item"><span class="term">SB1</span><span class="def">超级B1，震仓后的买点</span></div>
+    <div class="j-item"><span class="term">长安战法</span><span class="def">三日确认战法，胜率75%</span></div>
+    <div class="j-item"><span class="term">S1/S2/S3</span><span class="def">卖出逃顶三信号</span></div>
+    <div class="j-item"><span class="term">四块砖</span><span class="def">砖型图连4根红砖减半仓</span></div>
+    <div class="j-item"><span class="term">白线</span><span class="def">Z哥白线，强势股趋势线</span></div>
+    <div class="j-item"><span class="term">大哥线</span><span class="def">知行多空线，主力成本线</span></div>
+  </div>
+
+  <!-- ========== 综合评估总结 ========== -->
+  <div class="sec-head">
+    <h2><span class="num">04</span>SUMMARY<span class="cn">综合评估</span></h2>
+    <span class="tag">基于所有交易卡片的动态统计</span>
+  </div>
+  <div class="summary-zone">
+    <div class="summary-grid">
+      <div class="stat" id="sumTotal">
+        <div class="label">总交易笔数</div>
+        <div class="value neutral">—</div>
+        <div class="hint">含完整交易 + 持仓中</div>
+      </div>
+      <div class="stat" id="sumWinrate">
+        <div class="label">综合胜率</div>
+        <div class="value up">—</div>
+        <div class="hint">盈利交易 / 完整交易</div>
+      </div>
+      <div class="stat" id="sumPnl">
+        <div class="label">累计盈亏</div>
+        <div class="value neutral">—</div>
+        <div class="hint">按金额加权</div>
+      </div>
+      <div class="stat" id="sumAvgHold">
+        <div class="label">平均持仓</div>
+        <div class="value neutral">—</div>
+        <div class="hint">仅完整交易</div>
+      </div>
+    </div>
+    <div class="summary-verdict">
+      <div class="sv-card ok">
+        <div class="sv-label">CORRECT 正确</div>
+        <div class="sv-value" id="sumCorrect">0</div>
+      </div>
+      <div class="sv-card no">
+        <div class="sv-label">WRONG 错误</div>
+        <div class="sv-value" id="sumWrong">0</div>
+      </div>
+      <div class="sv-card warn">
+        <div class="sv-label">PARTIAL 待改进</div>
+        <div class="sv-value" id="sumPartial">0</div>
+      </div>
+    </div>
+    <div class="summary-zg" id="sumZgReview">
+      <div class="zg-head">
+        <div class="zg-avatar">Z</div>
+        <div class="zg-name">Z哥总评<span class="role">前阳光私募冠军</span></div>
+      </div>
+      <div class="zg-text" id="sumZgText">先批量导入交割单或单笔录入交易，Z 哥会基于所有交易给出综合评估。</div>
+    </div>
+
+    <!-- 错误模式诊断 -->
+    <div class="diagnosis-zone" id="diagnosisZone">
+      <div class="diag-head">
+        <div class="ic">!</div>
+        <h3>ERROR PATTERNS<span class="cn">错误模式诊断</span></h3>
+        <span class="desc">基于所有错误/待改进交易归类统计 · 按频次排序</span>
+      </div>
+      <div class="diag-modes" id="diagModes"></div>
+      <div class="diag-fix" id="diagFix"></div>
+    </div>
+  </div>
+
+  <!-- 一键深度复盘浮动按钮 -->
+  <button class="bulk-deep" id="bulkDeepBtn">
+    <span>Z 哥逐笔深度复盘</span>
+    <span class="count" id="bulkCount">0</span>
+  </button>
+
+  <!-- ========== 底部金句 ========== -->
+  <div class="closing">
+    <div class="label">// CLOSING REMARK</div>
+    <div class="saying">
+      复盘不是为了后悔，是为了下一笔不再犯同样的错。<br>
+      赚钱的交易记下来，那是你的本事；亏钱的交易也记下来，那才是你的学费。
+    </div>
+    <span class="sign">— zettaranc · 万千</span>
+  </div>
+
+  <div class="footer">
+    zettaranc trading terminal · review board v1.0<br>
+    <span class="disclaimer">本版面不构成任何投资建议，仅供个人交易复盘使用 | 交易有风险，入场需谨慎</span>
+  </div>
+
+</div>
+<script>
+  // ========== 表单交互 ==========
+  const form = document.getElementById('tradeForm');
+  const liveCalc = document.getElementById('liveCalc');
+
+  // 金额 + 仓位实时计算
+  function updateCalc() {
+    const price = parseFloat(form.price.value) || 0;
+    const qty = parseFloat(form.quantity.value) || 0;
+    const pos = form.position.value;
+    const amount = (price * qty).toFixed(2);
+    form.amount.value = amount > 0 ? '¥' + amount : '';
+    liveCalc.innerHTML = `金额：<b>${amount > 0 ? '¥' + amount : '—'}</b>　|　仓位 <b>${pos ? pos + '%' : '未填'}</b>`;
+  }
+  form.price.addEventListener('input', updateCalc);
+  form.quantity.addEventListener('input', updateCalc);
+  form.position.addEventListener('input', updateCalc);
+
+  // 买卖方向切换：卖出时显示盈亏字段
+  form.querySelectorAll('input[name="action"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const isSell = form.action.value === 'SELL';
+      document.getElementById('sellOnlyFields').style.display = isSell ? 'flex' : 'none';
+      document.getElementById('sellOnlyFields2').style.display = isSell ? 'flex' : 'none';
+    });
+  });
+
+  // 清空
+  document.getElementById('resetBtn').addEventListener('click', () => form.reset());
+
+  // Z哥自动点评生成（基于战法 + 评分 + J 值 + 盈亏）
+  function generateZReview(data) {
+    const verdict = data.verdict;
+    const isBuy = data.action === 'BUY';
+    const sig = data.signal_type || '';
+    const j = parseFloat(data.j_value);
+    const stratScore = parseInt(data.strat_score) || 0;
+    const profit = data.profit_pct;
+
+    let head = '', mid = '', quote = '';
+
+    if (verdict === 'correct') {
+      head = `这笔我给你打 <span class="ok">满分</span>。`;
+      if (sig.includes('B1')) mid = `J值 ${j} 进的场，B1 信号确认，<span class="hl">节奏感是对的</span>。`;
+      else if (sig.includes('B2')) mid = `B2 放量突破进的，<span class="ok">进场是对的</span>。`;
+      else if (sig.includes('B3')) mid = `B3 分歧转一致的节点进的，<span class="hl">这就是教科书</span>。`;
+      else mid = `<span class="ok">进场节奏对了</span>。`;
+      if (!isBuy && profit !== null) mid += `${profit >= 0 ? '卤煮 ' + profit.toFixed(1) + '%' : '止损 ' + Math.abs(profit).toFixed(1) + '%'}，没贪、没恋战。`;
+      quote = `"赚钱的交易都是相似的，亏钱的交易各有各的死法。"`;
+    } else if (verdict === 'wrong') {
+      head = `这笔 <span class="strike">典型的死法</span>。`;
+      if (j > 80) mid = `J 值 ${j} 你还往里冲？这不叫 B1，这叫"接飞刀"。<span class="strike">哪来的底气</span>？`;
+      else if (!sig) mid = `没战法信号就进场，<span class="strike">这就是赌博</span>。`;
+      else mid = `<span class="strike">节奏全乱</span>。`;
+      if (data.position && data.position > 40) mid += `仓位直接干到 ${data.position}%，<span class="strike">违反仓位铁律</span>。`;
+      quote = `"市场不缺机会，缺的是管住手。"`;
+    } else {
+      head = `这笔<span class="hl">有待商榷</span>。`;
+      if (!isBuy && profit !== null && profit > 0) {
+        mid = `买点可能对，但<span class="strike">卖点太急</span>。盈利 ${profit.toFixed(1)}% 就跑，<span class="hl">这就是卖飞</span>。`;
+        quote = `"卖飞比亏钱更难受，但管不住手的人，永远只能赚小钱。"`;
+      } else {
+        mid = `节奏和纪律都有<span class="hl">改进空间</span>。`;
+        quote = `"交易这行，靠的不是聪明，是纪律。"`;
+      }
+    }
+    return `${head} ${mid} <span class="quote">${quote}</span>`;
+  }
+
+  // 根据信号 + J 值 + 评分判定 verdict
+  function judgeVerdict(data) {
+    const sig = data.signal_type || '';
+    const j = parseFloat(data.j_value);
+    const stratScore = parseInt(data.strat_score) || 0;
+    const profit = data.profit_pct;
+    const pos = parseFloat(data.position) || 0;
+
+    // 错误：追高（J>80无B1）或重仓（>40%）或止损大亏
+    if ((j > 80 && !sig.includes('S')) || pos > 40 || (!isFinite(profit) && profit < -5)) return 'wrong';
+    // 部分：买对卖早（卖飞）
+    if (data.action === 'SELL' && sig === '卖飞') return 'partial';
+    if (stratScore > 0 && stratScore < 4) return 'partial';
+    // 正确：有战法信号 + 评分≥4
+    if ((sig.startsWith('B') || sig === '长安战法' || sig === 'SB1') && stratScore >= 4) return 'correct';
+    if (data.action === 'SELL' && (sig === 'S1' || sig === 'S2' || sig === 'S3' || sig === '卤煮') && stratScore >= 4) return 'correct';
+    return 'partial';
+  }
+
+  // 战法 pill 样式映射
+  function pillClass(sig) {
+    if (!sig) return '';
+    if (sig.startsWith('B1')) return 'b1';
+    if (sig.startsWith('B2')) return 'b2';
+    if (sig.startsWith('B3') || sig === 'SB1') return 'b3';
+    if (['S1','S2','S3','卤煮','止损','卖飞','四块砖'].includes(sig)) return 'sell';
+    return '';
+  }
+
+  // 提交：生成新交易卡片
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const data = {
+      ts_code: fd.get('ts_code'),
+      name: fd.get('name'),
+      trade_date: fd.get('trade_date'),
+      action: fd.get('action'),
+      price: parseFloat(fd.get('price')),
+      quantity: parseInt(fd.get('quantity')),
+      amount: parseFloat(fd.get('price')) * parseInt(fd.get('quantity')),
+      position: fd.get('position'),
+      signal_type: fd.get('signal_type'),
+      j_value: fd.get('j_value'),
+      sell_score: fd.get('sell_score'),
+      strat_score: fd.get('strat_score'),
+      buy_price: parseFloat(fd.get('buy_price')) || null,
+      holding_days: fd.get('holding_days'),
+      reason: fd.get('reason') || '—',
+      kline_img: fd.get('kline_img'),
+    };
+    if (!data.ts_code || !data.name || !data.price || !data.quantity) {
+      alert('请填写必填项：代码、名称、价格、数量');
+      return;
+    }
+    // 计算盈亏
+    data.profit_pct = (data.action === 'SELL' && data.buy_price) ? ((data.price - data.buy_price) / data.buy_price * 100) : null;
+    data.verdict = judgeVerdict(data);
+    data.verdictText = data.verdict === 'correct' ? 'CORRECT · 教科书' : data.verdict === 'wrong' ? 'WRONG · 追高' : 'PARTIAL · 待商榷';
+
+    // 生成卡片 HTML
+    const trades = document.querySelector('.trades');
+    const card = document.createElement('div');
+    card.className = `trade ${data.verdict}`;
+    const isSell = data.action === 'SELL';
+    const profitHtml = (isSell && data.profit_pct !== null)
+      ? `<span class="lbl">盈亏</span><span class="v ${data.profit_pct >= 0 ? 'up' : 'down'}">${data.profit_pct >= 0 ? '+' : ''}${data.profit_pct.toFixed(1)}%</span>`
+      : '';
+    const holdHtml = data.holding_days ? `<span class="lbl">持仓</span><span class="v">${data.holding_days} 天</span>` : '';
+    const sigPill = data.signal_type ? `<span class="pill ${pillClass(data.signal_type)}">${data.signal_type}</span>` : '<span class="pill">无信号</span>';
+    const jPill = data.j_value ? `<span class="pill">J值 ${data.j_value}</span>` : '';
+    const stratScoreHtml = data.strat_score ? `<span class="lbl">评分</span><span class="v ${data.verdict === 'correct' ? 'up' : data.verdict === 'wrong' ? 'down' : ''}">${data.strat_score}/5</span>` : '';
+    const sellScoreHtml = data.sell_score ? `<span class="lbl">防卖飞</span><span class="v">${data.sell_score}/5</span>` : '';
+    const posHtml = data.position ? `<span class="lbl">仓位</span><span class="v">${data.position}%</span>` : '';
+    const actLabel = isSell ? '卖出 / EXIT' : '买入 / ENTRY';
+    const actType = isSell ? (data.signal_type === '卤煮' ? '卤煮' : data.signal_type === '止损' ? '止损' : data.signal_type === '卖飞' ? '卖飞' : '离场') : '建仓';
+
+    let klineHtml = '';
+    if (data.kline_img && data.kline_img.size > 0) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const kz = card.querySelector('.kline-drop');
+        if (kz) {
+          kz.innerHTML = `
+            <div class="kline-preview">
+              <img src="${e.target.result}" alt="${data.ts_code} K线图">
+              <div class="bar"><span><span class="name">${data.ts_code}</span> · ${data.kline_img.name}</span></div>
+            </div>
+          `;
+        }
+      };
+      reader.readAsDataURL(data.kline_img);
+    }
+    klineHtml = `
+      <div class="kline-zone">
+        <div class="k"><span>K线图 / K-LINE SNAPSHOT</span><span style="font-size:10px">${data.kline_img && data.kline_img.size > 0 ? '已上传' : '未上传'}</span></div>
+        <div class="kline-drop" style="min-height:60px">
+          <div class="ph"><div class="ic">⬆</div><div>等待上传...</div></div>
+        </div>
+      </div>
+    `;
+
+    card.innerHTML = `
+      <div class="trade-head">
+        <div class="stock">
+          <span class="code">${data.ts_code}</span>
+          <span class="name">${data.name}</span>
+          <span class="date">${isSell ? '卖' : '买'} ${data.trade_date}${data.holding_days ? ' → 持仓 ' + data.holding_days + ' 天' : ''}</span>
+        </div>
+        <div class="verdict ${data.verdict}">${data.verdictText}</div>
+      </div>
+      <div class="trade-body">
+        <div class="cell">
+          <div class="k">${actLabel}</div>
+          <div class="row"><span class="lbl">价格</span><span class="v">¥${data.price.toFixed(2)}</span></div>
+          <div class="row"><span class="lbl">数量</span><span class="v">${data.quantity.toLocaleString()} 股</span></div>
+          <div class="row"><span class="lbl">金额</span><span class="v">¥${data.amount.toLocaleString(undefined,{maximumFractionDigits:2})}</span></div>
+          ${posHtml ? `<div class="row">${posHtml}</div>` : ''}
+        </div>
+        <div class="cell">
+          <div class="k">战法信号 / SIGNAL</div>
+          <div class="row">${sigPill}${jPill}</div>
+          ${stratScoreHtml ? `<div class="row">${stratScoreHtml}</div>` : ''}
+          ${sellScoreHtml ? `<div class="row">${sellScoreHtml}</div>` : ''}
+          ${profitHtml ? `<div class="row">${profitHtml}</div>` : ''}
+          ${holdHtml ? `<div class="row">${holdHtml}</div>` : ''}
+        </div>
+        <div class="cell">
+          <div class="k">备注 / NOTE</div>
+          <div style="font-size:12px;color:var(--txt-2);line-height:1.6">${data.reason}</div>
+        </div>
+      </div>
+      <div class="zg-review">
+        <div class="zg-head">
+          <div class="zg-avatar">Z</div>
+          <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+        </div>
+        <div class="zg-text">${generateZReview(data)}</div>
+      </div>
+      ${klineHtml}
+    `;
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    trades.insertBefore(card, trades.firstChild);
+    requestAnimationFrame(() => {
+      card.style.transition = 'opacity .4s, transform .4s';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    });
+    // 滚动到新卡片
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    form.reset();
+    updateCalc();
+  });
+
+  // ========== 批量导入逻辑 ==========
+  const modeTabs = document.querySelectorAll('.mode-tab');
+  const batchZone = document.getElementById('batchZone');
+  const tradeForm = document.getElementById('tradeForm');
+  const modeHint = document.getElementById('modeHint');
+
+  modeTabs.forEach(t => {
+    t.addEventListener('click', () => {
+      modeTabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const mode = t.dataset.mode;
+      if (mode === 'batch') {
+        batchZone.style.display = 'block';
+        tradeForm.style.display = 'none';
+        modeHint.textContent = '从通达信/同花顺/东财导出 CSV，一键生成所有复盘卡片';
+      } else {
+        batchZone.style.display = 'none';
+        tradeForm.style.display = '';
+        modeHint.textContent = '支持通达信 / 同花顺 / 东方财富 CSV 导出文件';
+      }
+    });
+  });
+
+  // 字段别名映射（兼容各券商导出格式）
+  const FIELD_ALIASES = {
+    date:     ['date','日期','成交日期','交易日期','发生日期','交易日'],
+    ts_code:  ['ts_code','code','股票代码','证券代码','代码'],
+    name:     ['name','股票名称','证券名称','名称'],
+    action:   ['action','买卖方向','操作','方向','买卖','交易类型'],
+    price:    ['price','成交价格','成交均价','均价','价格'],
+    quantity: ['quantity','成交数量','数量','股数','成交股数'],
+    amount:   ['amount','成交金额','金额','成交额','结算金额'],
+  };
+
+  function normalizeKey(k) {
+    return (k || '').toString().trim().toLowerCase().replace(/\s+/g, '');
+  }
+
+  function mapRow(headers, row) {
+    const obj = {};
+    for (const [field, aliases] of Object.entries(FIELD_ALIASES)) {
+      const aliasSet = aliases.map(normalizeKey);
+      for (let i = 0; i < headers.length; i++) {
+        if (aliasSet.includes(normalizeKey(headers[i]))) {
+          obj[field] = row[i];
+          break;
+        }
+      }
+      if (obj[field] === undefined) obj[field] = '';
+    }
+    return obj;
+  }
+
+  // 识别买卖方向
+  function parseAction(raw) {
+    if (!raw) return '';
+    const s = raw.toString().trim().toUpperCase();
+    if (['买入','买','BUY','B'].includes(s)) return 'BUY';
+    if (['卖出','卖','SELL','S'].includes(s)) return 'SELL';
+    if (s.includes('买')) return 'BUY';
+    if (s.includes('卖')) return 'SELL';
+    return '';
+  }
+
+  // 代码补后缀
+  function normalizeCode(code) {
+    if (!code) return '';
+    let c = code.toString().trim().replace(/[^0-9A-Za-z]/g, '');
+    if (c.length === 6) {
+      if (c.startsWith('6') || c.startsWith('5') || c.startsWith('9')) return c + '.SH';
+      return c + '.SZ';
+    }
+    return code.toString().trim();
+  }
+
+  // 日期规范化 → YYYY-MM-DD
+  function normalizeDate(d) {
+    if (!d) return '';
+    const s = d.toString().trim();
+    let m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+    m = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    return s;
+  }
+
+  // 简易 CSV 解析（支持引号、跨行）
+  function parseCSV(text) {
+    const rows = [];
+    let cur = [], field = '', inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (text[i+1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else field += ch;
+      } else {
+        if (ch === '"') inQuotes = true;
+        else if (ch === ',' || ch === '\t') { cur.push(field); field = ''; }
+        else if (ch === '\n' || ch === '\r') {
+          if (field || cur.length) { cur.push(field); rows.push(cur); cur = []; field = ''; }
+          if (ch === '\r' && text[i+1] === '\n') i++;
+        } else field += ch;
+      }
+    }
+    if (field || cur.length) { cur.push(field); rows.push(cur); }
+    return rows.filter(r => r.length && r.some(c => c.trim() !== ''));
+  }
+
+  // 去掉表头前的"标题行"（如"交割单查询"、"资金流水"等）
+  function findHeaderRow(rows) {
+    for (let i = 0; i < Math.min(rows.length, 8); i++) {
+      const r = rows[i].map(normalizeKey);
+      if (FIELD_ALIASES.date.some(a => r.includes(normalizeKey(a))) &&
+          FIELD_ALIASES.action.some(a => r.includes(normalizeKey(a)))) return i;
+    }
+    return 0;
+  }
+
+  const csvDrop = document.getElementById('csvDrop');
+  const csvFile = document.getElementById('csvFile');
+  const parseBtn = document.getElementById('parseBtn');
+  const batchPreview = document.getElementById('batchPreview');
+  const bpTable = document.getElementById('bpTable');
+  const batchCount = document.getElementById('batchCount');
+  let parsedTrades = [];
+
+  function handleCSV(file) {
+    if (!file) return;
+    if (!/\.csv$/i.test(file.name) && !/text\/(csv|plain)/.test(file.type)) {
+      alert('请上传 .csv 文件');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('CSV 文件不能超过 2MB');
+      return;
+    }
+    csvFile.dataset.name = file.name;
+    csvDrop.querySelector('.bu-text').textContent = '已选择：' + file.name;
+    csvDrop.querySelector('.bu-sub').textContent = '点击「解析并预览」继续';
+    parseBtn.disabled = false;
+  }
+  csvFile.addEventListener('change', () => { if (csvFile.files[0]) handleCSV(csvFile.files[0]); });
+  csvDrop.addEventListener('dragover', e => { e.preventDefault(); csvDrop.classList.add('dragover'); });
+  csvDrop.addEventListener('dragleave', () => csvDrop.classList.remove('dragover'));
+  csvDrop.addEventListener('drop', e => {
+    e.preventDefault();
+    csvDrop.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) {
+      csvFile.files = e.dataTransfer.files;
+      handleCSV(e.dataTransfer.files[0]);
+    }
+  });
+
+  parseBtn.addEventListener('click', () => {
+    if (!csvFile.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      let text = e.target.result;
+      // 去 BOM
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      let rows = parseCSV(text);
+      if (!rows.length) { alert('CSV 文件为空或格式无法识别'); return; }
+      const headerIdx = findHeaderRow(rows);
+      const headers = rows[headerIdx];
+      const dataRows = rows.slice(headerIdx + 1);
+      parsedTrades = dataRows.map(r => {
+        const o = mapRow(headers, r);
+        return {
+          date: normalizeDate(o.date),
+          ts_code: normalizeCode(o.ts_code),
+          name: (o.name || '').toString().trim(),
+          action: parseAction(o.action),
+          price: parseFloat(o.price) || 0,
+          quantity: Math.abs(parseFloat(o.quantity)) || 0,
+          amount: parseFloat((o.amount || '').toString().replace(/[¥,，\s]/g, '')) || 0,
+        };
+      }).filter(t => t.ts_code && t.price && t.quantity && t.action);
+
+      if (!parsedTrades.length) {
+        alert('未识别到有效交易记录。请检查 CSV 是否包含：日期/代码/方向/价格/数量 字段。');
+        return;
+      }
+      renderPreview();
+    };
+    reader.readAsText(csvFile.files[0], 'GBK'); // 通达信导出通常是 GBK
+  });
+
+  function renderPreview() {
+    batchCount.textContent = parsedTrades.length;
+    let html = `<thead><tr><th>#</th><th>日期</th><th>代码</th><th>名称</th><th>方向</th><th>价格</th><th>数量</th><th>金额</th></tr></thead><tbody>`;
+    parsedTrades.forEach((t, i) => {
+      const cls = t.action === 'BUY' ? 'buy' : 'sell';
+      const label = t.action === 'BUY' ? '买' : '卖';
+      html += `<tr>
+        <td class="row-num">${i+1}</td>
+        <td>${t.date}</td>
+        <td>${t.ts_code}</td>
+        <td>${t.name}</td>
+        <td><span class="badge ${cls}">${label}</span></td>
+        <td class="v">¥${t.price.toFixed(2)}</td>
+        <td class="v">${t.quantity.toLocaleString()}</td>
+        <td class="v">¥${t.amount.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+      </tr>`;
+    });
+    html += '</tbody>';
+    bpTable.innerHTML = html;
+    batchPreview.style.display = 'block';
+    batchPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // 清空
+  document.getElementById('clearBatch').addEventListener('click', () => {
+    parsedTrades = [];
+    batchPreview.style.display = 'none';
+    bpTable.innerHTML = '';
+    csvFile.value = '';
+    parseBtn.disabled = true;
+    csvDrop.querySelector('.bu-text').textContent = '点击或拖拽 CSV 文件';
+    csvDrop.querySelector('.bu-sub').textContent = '从通达信/同花顺/东财导出的交割单 · 限 2MB';
+  });
+
+  // 一键导入：按代码+日期排序，配对买卖，生成卡片
+  document.getElementById('importBtn').addEventListener('click', () => {
+    if (!parsedTrades.length) return;
+    // 按代码分组 + 日期排序
+    const groups = {};
+    parsedTrades.forEach(t => {
+      if (!groups[t.ts_code]) groups[t.ts_code] = [];
+      groups[t.ts_code].push(t);
+    });
+    const trades = document.querySelector('.trades');
+    let cardCount = 0;
+
+    Object.keys(groups).forEach(code => {
+      const records = groups[code].sort((a, b) => a.date.localeCompare(b.date));
+      // 配对：买入 + 后续卖出
+      let i = 0;
+      while (i < records.length) {
+        const buy = records[i];
+        let sell = null;
+        if (buy.action === 'BUY') {
+          for (let j = i + 1; j < records.length; j++) {
+            if (records[j].action === 'SELL') { sell = records[j]; break; }
+          }
+        }
+        const profitPct = sell ? (sell.price - buy.price) / buy.price * 100 : null;
+        const holdDays = sell ? Math.round((new Date(sell.date) - new Date(buy.date)) / 86400000) : null;
+
+        const data = {
+          ts_code: buy.ts_code,
+          name: buy.name || buy.ts_code,
+          trade_date: buy.date,
+          action: 'BUY',
+          price: buy.price,
+          quantity: buy.quantity,
+          amount: buy.amount,
+          position: null,
+          signal_type: '',
+          j_value: null,
+          sell_score: null,
+          strat_score: null,
+          buy_price: null,
+          holding_days: holdDays,
+          reason: sell ? `买入 ${buy.date} → 卖出 ${sell.date}（持仓 ${holdDays} 天）` : `买入 ${buy.date}（持仓中）`,
+          kline_img: null,
+          profit_pct: profitPct,
+          is_complete: !!sell,
+        };
+        data.verdict = judgeVerdict({...data, profit_pct: profitPct});
+        data.verdictText = data.verdict === 'correct' ? 'CORRECT · 待标注' : data.verdict === 'wrong' ? 'WRONG · 待标注' : 'PARTIAL · 待标注';
+
+        const card = document.createElement('div');
+        card.className = `trade ${data.verdict}`;
+        const profitHtml = (sell && profitPct !== null)
+          ? `<span class="lbl">盈亏</span><span class="v ${profitPct >= 0 ? 'up' : 'down'}">${profitPct >= 0 ? '+' : ''}${profitPct.toFixed(1)}%</span>`
+          : '<span class="lbl">状态</span><span class="v">持仓中</span>';
+        const holdHtml = holdDays ? `<span class="lbl">持仓</span><span class="v">${holdDays} 天</span>` : '';
+        const sellPriceHtml = sell ? `<div class="row"><span class="lbl">卖出</span><span class="v">¥${sell.price.toFixed(2)}</span></div>` : '';
+        const actLabel = sell ? '完整交易 / COMPLETE' : '买入 / ENTRY';
+
+        card.innerHTML = `
+          <div class="trade-head">
+            <div class="stock">
+              <span class="code">${data.ts_code}</span>
+              <span class="name">${data.name}</span>
+              <span class="date">买 ${buy.date}${sell ? ' → 卖 ' + sell.date : ''}</span>
+            </div>
+            <div class="verdict ${data.verdict}">${data.verdictText}</div>
+          </div>
+          <div class="trade-body">
+            <div class="cell">
+              <div class="k">${actLabel}</div>
+              <div class="row"><span class="lbl">买入</span><span class="v">¥${buy.price.toFixed(2)}</span></div>
+              ${sellPriceHtml}
+              <div class="row"><span class="lbl">数量</span><span class="v">${buy.quantity.toLocaleString()} 股</span></div>
+              <div class="row"><span class="lbl">金额</span><span class="v">¥${buy.amount.toLocaleString(undefined,{maximumFractionDigits:2})}</span></div>
+            </div>
+            <div class="cell">
+              <div class="k">盈亏 / P&L</div>
+              <div class="row">${profitHtml}</div>
+              ${holdHtml ? `<div class="row">${holdHtml}</div>` : ''}
+              <div class="row"><span class="lbl">信号</span><span class="pill">待标注</span></div>
+            </div>
+            <div class="cell">
+              <div class="k">备注 / NOTE</div>
+              <div style="font-size:12px;color:var(--txt-2);line-height:1.6">${data.reason}<br><br><span style="color:var(--neutral);font-size:11px">// 批量导入 · 请手动补充战法信号与 Z 哥点评</span></div>
+            </div>
+          </div>
+          <div class="zg-review">
+            <div class="zg-head">
+              <div class="zg-avatar">Z</div>
+              <div class="zg-name">Z哥点评<span class="role">前阳光私募冠军</span></div>
+            </div>
+            <div class="zg-text">${generateZReview(data)}</div>
+          </div>
+        `;
+        card.style.opacity = '0';
+        trades.insertBefore(card, trades.firstChild);
+        requestAnimationFrame(() => {
+          card.style.transition = 'opacity .4s';
+          card.style.opacity = '1';
+        });
+        cardCount++;
+        i = sell ? records.indexOf(sell) + 1 : i + 1;
+      }
+    });
+
+    // 切回单笔模式，清空批量区
+    document.querySelector('.mode-tab[data-mode="manual"]').click();
+    alert(`已成功导入 ${cardCount} 笔交易，已生成复盘卡片。请手动补充战法信号和评分，Z 哥点评为初步判定。`);
+  });
+
+  // 下载 CSV 模板
+  document.getElementById('downloadTpl').addEventListener('click', () => {
+    const csv = 'date,ts_code,name,action,price,quantity,amount\n2026-07-14,600519.SH,贵州茅台,买入,1685.00,1000,1685000\n2026-08-01,600519.SH,贵州茅台,卖出,1887.20,1000,1887200\n';
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'trade_template.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  // ========== Z 哥深度复盘生成器 ==========
+  // 基于交易完整数据，模拟 Z 哥视角的多维度深度分析
+  function generateDeepReview(card) {
+    const data = extractCardData(card);
+    const v = data.verdict;
+    const isComplete = data.isComplete;
+    const profit = data.profitPct;
+    const holdDays = data.holdDays;
+    const sig = data.signalType;
+    const position = data.position;
+    const jVal = data.jVal;
+
+    let html = '<div class="da-title">Z哥深度复盘 · ' + (v === 'correct' ? '正确交易拆解' : v === 'wrong' ? '错误交易剖析' : '改进空间分析') + '</div>';
+
+    // 1. 买点分析
+    let buyAnalysis = '';
+    if (sig && sig.match(/B1|SB1/)) {
+      buyAnalysis = `<b>买点 ${sig}</b>：${jVal !== null ? 'J 值 ' + jVal + '，' : ''}符合战法信号，<span class="good">进场节奏是对的</span>。`;
+    } else if (sig === 'B2') {
+      buyAnalysis = `<b>买点 B2</b>：放量突破确认进场，<span class="good">趋势跟随正确</span>。`;
+    } else if (sig === 'B3') {
+      buyAnalysis = `<b>买点 B3</b>：分歧转一致节点，<span class="good">中继买点把握到位</span>。`;
+    } else if (sig === '长安战法') {
+      buyAnalysis = `<b>长安战法</b>：三日确认，胜率 75% 往上，<span class="good">保守稳健</span>。`;
+    } else if (jVal !== null && jVal > 80) {
+      buyAnalysis = `<b>无战法追高</b>：J 值 ${jVal} 已经超买区，<span class="bad">这就是接飞刀</span>。`;
+    } else if (!sig) {
+      buyAnalysis = `<b>无信号进场</b>：没有战法依据，<span class="bad">凭感觉交易</span>。`;
+    } else {
+      buyAnalysis = `<b>信号 ${sig}</b>：进场逻辑待复核。`;
+    }
+    html += `<div class="da-row">${buyAnalysis}</div>`;
+
+    // 2. 卖点分析（仅完整交易）
+    if (isComplete) {
+      let sellAnalysis = '';
+      if (profit !== null && profit > 0) {
+        if (holdDays !== null && holdDays <= 5 && profit < 8) {
+          sellAnalysis = `<b>卖点过早</b>：持仓仅 ${holdDays} 天就跑，赚 ${profit.toFixed(1)}% 是<span class="bad">卖飞节奏</span>。`;
+        } else if (sig === 'S1' || sig === 'S2' || sig === 'S3') {
+          sellAnalysis = `<b>卖点 ${sig}</b>：逃顶信号触发离场，<span class="good">纪律执行到位</span>。`;
+        } else if (sig === '卤煮') {
+          sellAnalysis = `<b>卤煮离场</b>：盈利 ${profit.toFixed(1)}% 落袋为安，<span class="good">节奏稳健</span>。`;
+        } else {
+          sellAnalysis = `<b>卖出执行</b>：盈利 ${profit.toFixed(1)}%，持仓 ${holdDays} 天。`;
+        }
+      } else if (profit !== null && profit < 0) {
+        sellAnalysis = `<b>止损离场</b>：亏损 ${Math.abs(profit).toFixed(1)}%，${Math.abs(profit) > 8 ? '<span class="bad">止损太晚</span>' : '<span class="good">跑得快</span>'}。`;
+      }
+      if (sellAnalysis) html += `<div class="da-row">${sellAnalysis}</div>`;
+    }
+
+    // 3. 仓位分析
+    let posAnalysis = '';
+    if (position !== null) {
+      if (position > 40) posAnalysis = `<b>仓位 ${position}%</b>：<span class="bad">违反三层防火墙铁律</span>，单笔不应超 40%。`;
+      else if (position >= 25) posAnalysis = `<b>仓位 ${position}%</b>：<span class="good">符合标准仓</span>，节奏稳健。`;
+      else posAnalysis = `<b>仓位 ${position}%</b>：试探性建仓，${profit !== null && profit > 10 ? '<span class="bad">仓位太轻错失主升</span>' : '<span class="good">谨慎试错</span>'}。`;
+    } else {
+      posAnalysis = `<b>仓位</b>：未填写，<span class="bad">建议下次记录仓位便于复盘</span>。`;
+    }
+    html += `<div class="da-row">${posAnalysis}</div>`;
+
+    // 4. 纪律评分
+    let discipline = '';
+    const score = data.stratScore || 3;
+    if (score >= 4) discipline = `<b>纪律评分 ${score}/5</b>：<span class="good">执行到位</span>。`;
+    else if (score >= 3) discipline = `<b>纪律评分 ${score}/5</b>：合格，但有提升空间。`;
+    else discipline = `<b>纪律评分 ${score}/5</b>：<span class="bad">需要加强</span>。`;
+    html += `<div class="da-row">${discipline}</div>`;
+
+    // 5. 改进建议
+    let improve = '<b>改进建议</b>：';
+    if (v === 'correct') {
+      improve += '<span class="good">保持节奏</span>，下次类似机会可以适当放大仓位至 35-40%。';
+    } else if (v === 'wrong') {
+      improve += '<span class="bad">问题在进场和仓位</span>，下次没有战法信号坚决不进场，单笔仓位不超过 30%。';
+    } else {
+      improve += '买点没问题，<span class="bad">卖点需要优化</span>，记住：趋势没坏就让利润奔跑，防卖飞评分 ≥4 时减半仓而非全跑。';
+    }
+    html += `<div class="da-row">${improve}</div>`;
+
+    // 6. 金句收尾
+    const quotes = {
+      correct: '"赚钱的交易都是相似的，亏钱的交易各有各的死法。"',
+      wrong: '"市场不缺机会，缺的是管住手。"',
+      partial: '"卖飞比亏钱更难受，但管不住手的人，永远只能赚小钱。"'
+    };
+    html += `<div class="da-quote">${quotes[v] || '"交易这行，靠的不是聪明，是纪律。"'}</div>`;
+    return html;
+  }
+
+  // 从卡片 DOM 提取数据
+  function extractCardData(card) {
+    const verdictEl = card.querySelector('.verdict');
+    const verdict = verdictEl ? (verdictEl.classList.contains('correct') ? 'correct' : verdictEl.classList.contains('wrong') ? 'wrong' : 'partial') : 'partial';
+    const text = card.innerText;
+    const nameMatch = text.match(/([\u4e00-\u9fa5A-Za-z]+)\s/);
+    const codeMatch = text.match(/(\d{6}\.[SH|SZ])/);
+    const priceMatch = text.match(/¥([\d.]+)/g) || [];
+    const profitMatch = text.match(/([+-]?\d+\.?\d*)%/);
+    const holdMatch = text.match(/持仓\s*(\d+)\s*天/);
+    const sigMatch = text.match(/(B1|B2|B3|SB1|长安战法|S1|S2|S3|卤煮|止损|卖飞|四块砖|无信号|待标注)/);
+    const posMatch = text.match(/仓位\s*(\d+)%/);
+    const scoreMatch = text.match(/评分\s*(\d)\/5/);
+    const jMatch = text.match(/J值\s*([-\d.]+)/);
+    const isComplete = text.includes('完整交易') || text.includes('COMPLETE');
+
+    return {
+      verdict,
+      name: nameMatch ? nameMatch[1] : '',
+      tsCode: codeMatch ? codeMatch[1] : '',
+      buyPrice: priceMatch[0] ? parseFloat(priceMatch[0].replace('¥','')) : null,
+      sellPrice: priceMatch[1] ? parseFloat(priceMatch[1].replace('¥','')) : null,
+      profitPct: profitMatch ? parseFloat(profitMatch[1]) : null,
+      holdDays: holdMatch ? parseInt(holdMatch[1]) : null,
+      signalType: sigMatch ? sigMatch[1] : '',
+      position: posMatch ? parseInt(posMatch[1]) : null,
+      stratScore: scoreMatch ? parseInt(scoreMatch[1]) : null,
+      jVal: jMatch ? parseFloat(jMatch[1]) : null,
+      isComplete,
+    };
+  }
+
+  // 给单张卡片注入深度复盘按钮
+  function injectDeepBtn(card) {
+    if (card.querySelector('.deep-btn')) return;
+    const zgReview = card.querySelector('.zg-review');
+    if (!zgReview) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'deep-btn';
+    btn.innerHTML = '◆ Z 哥深度复盘';
+    btn.addEventListener('click', () => {
+      let analysis = card.querySelector('.deep-analysis');
+      if (!analysis) {
+        analysis = document.createElement('div');
+        analysis.className = 'deep-analysis';
+        zgReview.parentNode.insertBefore(analysis, zgReview.nextSibling);
+      }
+      if (analysis.classList.contains('show')) {
+        analysis.classList.remove('show');
+        btn.classList.remove('done');
+        btn.innerHTML = '◆ Z 哥深度复盘';
+      } else {
+        analysis.innerHTML = generateDeepReview(card);
+        analysis.classList.add('show');
+        btn.classList.add('done');
+        btn.innerHTML = '✓ 已深度复盘';
+      }
+    });
+    zgReview.appendChild(btn);
+  }
+
+  // 给页面上所有卡片注入按钮（包括示例卡片 + 后续生成的）
+  function injectAllDeepBtns() {
+    document.querySelectorAll('.trade').forEach(injectDeepBtn);
+  }
+
+  // 监听 DOM 变化，新卡片自动注入按钮
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      m.addedNodes.forEach(node => {
+        if (node.nodeType === 1 && node.classList && node.classList.contains('trade')) {
+          injectDeepBtn(node);
+          updateStats();
+        }
+      });
+    });
+  });
+
+  // ========== 动态统计 ==========
+  function updateStats() {
+    const cards = document.querySelectorAll('.trade');
+    const bulkBtn = document.getElementById('bulkDeepBtn');
+    const bulkCount = document.getElementById('bulkCount');
+    if (cards.length === 0) {
+      bulkBtn.classList.remove('show');
+      return;
+    }
+    bulkBtn.classList.add('show');
+    bulkCount.textContent = cards.length;
+
+    let correct = 0, wrong = 0, partial = 0;
+    let completeCount = 0, winCount = 0;
+    let totalPnl = 0;
+    let totalAmount = 0;
+    let holdDays = [];
+
+    cards.forEach(c => {
+      const v = c.querySelector('.verdict');
+      if (!v) return;
+      if (v.classList.contains('correct')) correct++;
+      else if (v.classList.contains('wrong')) wrong++;
+      else partial++;
+
+      const text = c.innerText;
+      const isComplete = text.includes('完整交易') || text.includes('COMPLETE') || /盈亏\s*[+-]?\d/.test(text);
+      const profitMatch = text.match(/([+-]?\d+\.?\d*)%/);
+      const amountMatch = text.match(/金额\s*¥([\d,.]+)/);
+      const holdMatch = text.match(/持仓\s*(\d+)\s*天/);
+
+      if (isComplete && profitMatch) {
+        completeCount++;
+        const profit = parseFloat(profitMatch[1]);
+        if (profit > 0) winCount++;
+        const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : 0;
+        totalPnl += profit * amount / 100;
+        totalAmount += amount;
+      }
+      if (holdMatch) holdDays.push(parseInt(holdMatch[1]));
+    });
+
+    // 更新顶部仪表盘
+    setStat('sumTotal', cards.length, 'neutral', '');
+    const winrate = completeCount > 0 ? Math.round(winCount / completeCount * 100) : 0;
+    setStat('sumWinrate', winrate + '%', winrate >= 50 ? 'up' : 'down', `${winCount}/${completeCount} 笔盈利`);
+    const pnlPct = totalAmount > 0 ? (totalPnl / totalAmount * 100).toFixed(1) : '0.0';
+    setStat('sumPnl', (pnlPct >= 0 ? '+' : '') + pnlPct + '%', pnlPct >= 0 ? 'up' : 'down', '按金额加权');
+    const avgHold = holdDays.length ? Math.round(holdDays.reduce((a,b) => a+b, 0) / holdDays.length) : 0;
+    setStat('sumAvgHold', avgHold + '天', 'neutral', `最长 ${Math.max(...holdDays,0)} / 最短 ${Math.min(...holdDays,0)}`);
+
+    document.getElementById('sumCorrect').textContent = correct;
+    document.getElementById('sumWrong').textContent = wrong;
+    document.getElementById('sumPartial').textContent = partial;
+
+    // 生成 Z 哥总评
+    generateSummaryZg(correct, wrong, partial, winrate, parseFloat(pnlPct), avgHold, cards.length);
+    // 错误模式诊断
+    generateDiagnosis(cards);
+  }
+
+  // ========== 错误模式诊断 ==========
+  // 定义 6 大常见错误模式，扫描所有错误/待改进交易归类
+  const ERROR_PATTERNS = {
+    chase_high: {
+      name: '追高接飞刀',
+      tag: '进场',
+      tagColor: 'rgba(255,59,48,.3)',
+      desc: 'J 值超买区（&gt;80）或无战法信号追高进场，<b>违反"少妇战法"</b>频率控制',
+      fix: '<b>纪律</b>：J 值 &gt; 80 坚决不进场，没有 B1/B2/B3 信号不动手',
+    },
+    over_position: {
+      name: '仓位过重',
+      tag: '仓位',
+      tagColor: 'rgba(255,59,48,.3)',
+      desc: '单笔仓位 &gt; 40%，<span class="bad">违反三层防火墙铁律</span>，单只股票风险敞口过大',
+      fix: '<b>铁律</b>：单笔不超过 40%，单板块不超过 60%，总仓位不超过 80%',
+    },
+    sell_too_early: {
+      name: '卖飞过早',
+      tag: '卖点',
+      tagColor: 'rgba(255,107,26,.3)',
+      desc: '盈利 &lt; 8% 或持仓 ≤ 5 天就跑，<span class="bad">没让利润奔跑</span>，错过主升浪',
+      fix: '<b>规则</b>：防卖飞评分 ≥ 4 才减半仓，趋势未破不全跑',
+    },
+    stop_loss_late: {
+      name: '止损太晚',
+      tag: '止损',
+      tagColor: 'rgba(255,59,48,.3)',
+      desc: '亏损 &gt; 8% 才止损，<span class="bad">小亏拖成大亏</span>，没有执行 S1 逃顶信号',
+      fix: '<b>纪律</b>：跌破买入价 5% 立即止损，S1 信号一出就走',
+    },
+    no_signal: {
+      name: '无战法信号',
+      tag: '进场',
+      tagColor: 'rgba(255,107,26,.3)',
+      desc: '凭感觉/听消息进场，<span class="bad">没有战法依据</span>，等同于赌博',
+      fix: '<b>原则</b>：只做有信号的交易，没信号就空仓等待',
+    },
+    too_small_position: {
+      name: '仓位过轻',
+      tag: '仓位',
+      tagColor: 'rgba(255,107,26,.3)',
+      desc: '仓位 &lt; 15%，<span class="bad">看对了也没赚到钱</span>，浪费好机会',
+      fix: '<b>建议</b>：高胜率战法（长安/B1）可放到 30-35%',
+    },
+  };
+
+  function classifyErrors(card) {
+    const data = extractCardData(card);
+    const v = data.verdict;
+    // 只分析 wrong 和 partial
+    if (v === 'correct') return [];
+    const issues = [];
+    const text = card.innerText;
+
+    // 1. 追高：J>80 或无信号但有价格高位特征
+    if (data.jVal !== null && data.jVal > 80) issues.push('chase_high');
+    // 2. 仓位过重
+    if (data.position !== null && data.position > 40) issues.push('over_position');
+    // 3. 卖飞：盈利但持仓短/盈利少
+    if (data.profitPct !== null && data.profitPct > 0 && data.profitPct < 8 &&
+        data.holdDays !== null && data.holdDays <= 5) issues.push('sell_too_early');
+    // 卖飞信号
+    if (data.signalType === '卖飞' || (text.includes('卖飞') && v === 'partial')) issues.push('sell_too_early');
+    // 4. 止损太晚
+    if (data.profitPct !== null && data.profitPct < -8) issues.push('stop_loss_late');
+    // 5. 无战法信号
+    if (!data.signalType || data.signalType === '无信号' || data.signalType === '待标注') {
+      if (v === 'wrong') issues.push('no_signal');
+    }
+    // 6. 仓位过轻 + 盈利较大
+    if (data.position !== null && data.position < 15 && data.profitPct !== null && data.profitPct > 10) {
+      issues.push('too_small_position');
+    }
+    // 兜底：wrong 但没匹配上具体模式，归到追高（最常见错误）
+    if (issues.length === 0 && v === 'wrong') issues.push('chase_high');
+    // partial 兜底归到卖飞
+    if (issues.length === 0 && v === 'partial') issues.push('sell_too_early');
+    return issues;
+  }
+
+  function generateDiagnosis(cards) {
+    const diagZone = document.getElementById('diagnosisZone');
+    const diagModes = document.getElementById('diagModes');
+    const diagFix = document.getElementById('diagFix');
+    if (!diagZone) return;
+
+    // 统计每种错误模式的频次 + 涉及股票
+    const stats = {};
+    let totalErrors = 0;
+    cards.forEach(c => {
+      const issues = classifyErrors(c);
+      if (issues.length === 0) return;
+      const data = extractCardData(c);
+      const stockLabel = (data.name || data.tsCode || '').toString();
+      issues.forEach(issue => {
+        if (!stats[issue]) stats[issue] = { count: 0, stocks: new Set() };
+        stats[issue].count++;
+        stats[issue].stocks.add(stockLabel);
+        totalErrors++;
+      });
+    });
+
+    if (totalErrors === 0) {
+      diagZone.classList.remove('show');
+      return;
+    }
+    diagZone.classList.add('show');
+
+    // 按频次排序
+    const sorted = Object.entries(stats).sort((a, b) => b[1].count - a[1].count);
+    const maxCount = sorted[0][1].count;
+    let html = '';
+    sorted.forEach(([key, info], idx) => {
+      const p = ERROR_PATTERNS[key] || { name: key, desc: '其他错误', fix: '', tag: '其他', tagColor: '' };
+      const level = info.count >= maxCount * 0.6 ? 'high' : info.count >= maxCount * 0.3 ? 'mid' : 'low';
+      const barWidth = (info.count / maxCount * 100).toFixed(0);
+      const stocksArr = Array.from(info.stocks).slice(0, 3);
+      const stocksStr = stocksArr.join(' · ') + (info.stocks.size > 3 ? ` 等 ${info.stocks.size} 只` : '');
+      html += `
+        <div class="diag-mode ${level}">
+          <div class="rank">${idx + 1}</div>
+          <div class="info">
+            <div class="name">${p.name}<span class="tag" style="background:${p.tagColor};color:var(--txt)">${p.tag}</span></div>
+            <div class="desc">${p.desc}</div>
+            <div class="stocks">涉及：${stocksStr || '—'}</div>
+          </div>
+          <div class="bar-cell">
+            <div class="count">${info.count}</div>
+            <div class="bar"><i style="width:${barWidth}%"></i></div>
+          </div>
+        </div>
+      `;
+    });
+    diagModes.innerHTML = html;
+
+    // 生成改进路线图（基于 top 3 错误）
+    const top3 = sorted.slice(0, 3).map(([k]) => ERROR_PATTERNS[k]).filter(Boolean);
+    let fixHtml = '<div class="fix-title">IMPROVEMENT ROADMAP · 改进路线图</div><ol>';
+    top3.forEach((p, i) => {
+      fixHtml += `<li>${p.fix}</li>`;
+    });
+    fixHtml += '</ol>';
+    fixHtml += `<div style="margin-top:10px;padding:8px 12px;border-radius:6px;background:rgba(255,179,0,.06);border:1px solid rgba(255,179,0,.2);font-size:12px;color:var(--gold);font-style:italic;line-height:1.6">// Z哥寄语：管不住手的人，永远只能赚小钱。先把这 ${top3.length} 个问题改了，再谈赚钱。</div>`;
+    diagFix.innerHTML = fixHtml;
+  }
+
+  function setStat(id, value, cls, hint) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const v = el.querySelector('.value');
+    const h = el.querySelector('.hint');
+    v.className = 'value ' + cls;
+    v.innerHTML = value.toString().replace(/(\d+)/, '<span style="font-size:42px">$1</span>').replace(/<span[^>]*>(\d+)<\/span>(.+)/, '$1<span style="font-size:24px">$2</span>') || value;
+    // 简化：直接设值
+    v.innerHTML = value;
+    if (hint) h.textContent = hint;
+  }
+
+  function generateSummaryZg(correct, wrong, partial, winrate, pnlPct, avgHold, total) {
+    const el = document.getElementById('sumZgText');
+    if (!el) return;
+    let html = '';
+    if (total === 0) {
+      el.innerHTML = '先批量导入交割单或单笔录入交易，Z 哥会基于所有交易给出综合评估。';
+      return;
+    }
+    html += `总共 <b>${total}</b> 笔交易，其中 <span class="good">正确 ${correct} 笔</span>、<span class="bad">错误 ${wrong} 笔</span>、待改进 ${partial} 笔。<br>`;
+    if (winrate > 0) html += `综合胜率 <b>${winrate}%</b>，${winrate >= 60 ? '<span class="good">及格线以上</span>' : '<span class="bad">不及格，需要反思</span>'}。`;
+    if (pnlPct !== 0) html += ` 累计${pnlPct >= 0 ? '盈利' : '亏损'} <b>${pnlPct >= 0 ? '+' : ''}${pnlPct}%</b>（按金额加权）。`;
+    if (avgHold > 0) html += ` 平均持仓 <b>${avgHold} 天</b>。`;
+    html += '<br><br>';
+    // 综合诊断
+    if (wrong >= correct && wrong > 0) {
+      html += '<b>诊断</b>：错误交易偏多，<span class="bad">主要问题在进场和仓位</span>。建议先停手，回顾每笔错误交易的进场逻辑，没有战法信号坚决不动。';
+    } else if (partial > correct) {
+      html += '<b>诊断</b>：卖飞较多，<span class="bad">问题在卖点</span>。趋势没坏就让利润奔跑，防卖飞评分 ≥4 才减半仓。';
+    } else if (correct >= wrong && winrate >= 60) {
+      html += '<b>诊断</b>：<span class="good">节奏整体可以</span>，但要看是不是运气。继续按战法纪律执行，别飘。';
+    } else {
+      html += '<b>诊断</b>：交易样本还少，<span class="good">先攒够 20 笔再下结论</span>。';
+    }
+    html += '<br><br><span style="color:var(--gold);font-style:italic">"复盘不是为了后悔，是为了下一笔不再犯同样的错。"</span>';
+    el.innerHTML = html;
+  }
+
+  // 一键逐笔深度复盘
+  document.getElementById('bulkDeepBtn').addEventListener('click', async () => {
+    const cards = document.querySelectorAll('.trade');
+    if (!cards.length) return;
+    const btn = document.getElementById('bulkDeepBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span>正在逐笔分析...</span>';
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      let analysis = card.querySelector('.deep-analysis');
+      if (!analysis) {
+        analysis = document.createElement('div');
+        analysis.className = 'deep-analysis';
+        const zg = card.querySelector('.zg-review');
+        if (zg) zg.parentNode.insertBefore(analysis, zg.nextSibling);
+      }
+      analysis.innerHTML = generateDeepReview(card);
+      analysis.classList.add('show');
+      const btnDeep = card.querySelector('.deep-btn');
+      if (btnDeep) { btnDeep.classList.add('done'); btnDeep.innerHTML = '✓ 已深度复盘'; }
+      btn.innerHTML = `<span>已分析 ${i+1}/${cards.length}</span>`;
+      // 等一会再处理下一张，制造逐个分析的视觉效果
+      await new Promise(r => setTimeout(r, 350));
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<span>✓ 全部深度复盘完成</span><span class="count">' + cards.length + '</span>';
+    setTimeout(() => {
+      btn.innerHTML = '<span>Z 哥逐笔深度复盘</span><span class="count">' + cards.length + '</span>';
+    }, 3000);
+    // 滚动到综合评估
+    document.querySelector('.summary-zone').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // 初始化：注入按钮 + 启动统计 + 启动监听
+  injectAllDeepBtns();
+  updateStats();
+  observer.observe(document.querySelector('.trades'), { childList: true });
+</script>
+
+<script>
+  // K线图上传交互：点击 + 拖拽 + 预览 + 移除
+  document.querySelectorAll('.kline-drop').forEach(zone => {
+    const input = zone.querySelector('input[type="file"]');
+    const ph = zone.querySelector('.ph');
+    const stock = input.dataset.stock || '';
+
+    function handleFile(file) {
+      if (!file) return;
+      if (!/^image\/(png|jpeg|jpg)$/i.test(file.type)) {
+        alert('只支持 PNG / JPG 格式');
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        alert('图片不能超过 8MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.createElement('div');
+        preview.className = 'kline-preview';
+        preview.innerHTML = `
+          <img src="${e.target.result}" alt="${stock} K线图">
+          <div class="bar">
+            <span><span class="name">${stock}</span> · ${file.name}</span>
+            <button class="remove" type="button">移除图片 ×</button>
+          </div>
+        `;
+        zone.innerHTML = '';
+        zone.appendChild(preview);
+        zone.classList.remove('dragover');
+        // 重新挂载隐藏 input 以便重复上传
+        const newInput = document.createElement('input');
+        newInput.type = 'file';
+        newInput.accept = 'image/png,image/jpeg';
+        newInput.dataset.stock = stock;
+        newInput.style.cssText = 'position:absolute;inset:0;opacity:0;cursor:pointer';
+        zone.appendChild(newInput);
+        bindInput(newInput, zone, stock);
+        preview.querySelector('.remove').addEventListener('click', ev => {
+          ev.stopPropagation();
+          resetZone(zone, stock);
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function bindInput(inp, zn, code) {
+      inp.addEventListener('change', () => {
+        if (inp.files && inp.files[0]) handleFile(inp.files[0]);
+      });
+    }
+
+    function resetZone(zn, code) {
+      zn.classList.remove('dragover');
+      zn.innerHTML = `
+        <input type="file" accept="image/png,image/jpeg" data-stock="${code}">
+        <div class="ph"><div class="ic">⬆</div><div>重新上传 K线截图</div><div style="font-size:10px">点击或拖拽 PNG/JPG</div></div>
+      `;
+      const ni = zn.querySelector('input');
+      bindInput(ni, zn, code);
+      attachDrag(zn, code);
+    }
+
+    function attachDrag(zn, code) {
+      zn.addEventListener('dragover', e => { e.preventDefault(); zn.classList.add('dragover'); });
+      zn.addEventListener('dragleave', () => zn.classList.remove('dragover'));
+      zn.addEventListener('drop', e => {
+        e.preventDefault();
+        zn.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+    }
+
+    bindInput(input, zone, stock);
+    attachDrag(zone, stock);
+  });
+</script>
+</body>
+</html>
