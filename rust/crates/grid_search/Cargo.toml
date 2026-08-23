@@ -1,0 +1,14 @@
+[package]
+name = "zt_grid_search"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+zt_core_types = { path = "../core_types" }
+zt_backtest_engine = { path = "../backtest_engine" }
+serde = { version = "1.0", features = ["derive"] }
+rayon = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

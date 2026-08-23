@@ -1,0 +1,109 @@
+=== tests/test_backtest.py ===
+============================= test session starts ==============================
+collected 16 items
+
+tests/test_backtest.py ................                                  [100%]
+
+============================== 16 passed in 0.27s ==============================
+=== tests/test_backtest_portfolio.py ===
+============================= test session starts ==============================
+collected 42 items
+
+tests/test_backtest_portfolio.py ....................................... [ 92%]
+...                                                                      [100%]
+
+============================== 42 passed in 0.30s ==============================
+=== tests/test_backtest_six_step.py ===
+============================= test session starts ==============================
+collected 3 items
+
+tests/test_backtest_six_step.py ...                                      [100%]
+
+============================== 3 passed in 0.24s ===============================
+=== tests/test_backtest_scorer.py ===
+============================= test session starts ==============================
+collected 17 items
+
+tests/test_backtest_scorer.py ..........s......                          [100%]
+
+======================== 16 passed, 1 skipped in 0.25s =========================
+=== tests/test_simulator.py ===
+============================= test session starts ==============================
+collected 35 items
+
+tests/test_simulator.py ...................................              [100%]
+
+============================== 35 passed in 0.45s ==============================
+=== tests/test_verify_pipeline.py ===
+============================= test session starts ==============================
+collected 11 items / 1 deselected / 10 selected
+
+tests/test_verify_pipeline.py ..........                                 [100%]
+
+======================= 10 passed, 1 deselected in 0.25s =======================
+=== tests/test_verify_gates.py ===
+============================= test session starts ==============================
+collected 7 items
+
+tests/test_verify_gates.py .......                                       [100%]
+
+============================== 7 passed in 0.22s ===============================
+=== tests/test_verify_scorer.py ===
+============================= test session starts ==============================
+collected 6 items
+
+tests/test_verify_scorer.py ......                                       [100%]
+
+============================== 6 passed in 0.22s ===============================
+=== tests/test_verify_walk_forward.py ===
+============================= test session starts ==============================
+collected 8 items
+
+tests/test_verify_walk_forward.py ........                               [100%]
+
+============================== 8 passed in 0.23s ===============================
+=== tests/test_screener.py ===
+============================= test session starts ==============================
+collected 24 items
+
+tests/test_screener.py ........................                          [100%]
+
+============================== 24 passed in 0.24s ==============================
+=== tests/test_core.py ===
+============================= test session starts ==============================
+collected 25 items
+
+tests/test_core.py .........................                             [100%]
+
+============================== 25 passed in 0.25s ==============================
+=== tests/test_indicators.py ===
+============================= test session starts ==============================
+collected 117 items
+
+tests/test_indicators.py ............................................... [ 40%]
+......................................................................   [100%]
+
+============================= 117 passed in 0.33s ==============================
+=== tests/test_rust_compat.py ===
+============================= test session starts ==============================
+collected 5 items
+
+tests/test_rust_compat.py ...F.                                          [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_rust_choice_returns_module ________________________
+modules/core/_rust_compat.py:64: in get_compute_module
+    import _core_compute  # type: ignore[import-not-found]
+    ^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named '_core_compute'
+
+The above exception was the direct cause of the following exception:
+tests/test_rust_compat.py:39: in test_rust_choice_returns_module
+    mod = _rust_compat.get_compute_module()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+modules/core/_rust_compat.py:71: in get_compute_module
+    raise RuntimeError(
+E   RuntimeError: _core_compute import failed (impl=rust): No module named '_core_compute'. Set ZETTARANC_BACKTEST_IMPL=python to fall back, or run `maturin develop --release` to build.
+=========================== short test summary info ============================
+FAILED tests/test_rust_compat.py::test_rust_choice_returns_module - RuntimeEr...
+========================= 1 failed, 4 passed in 0.25s ==========================

@@ -1,0 +1,44 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/core_types",
+    "crates/indicators",
+    "crates/backtest_engine",
+    "crates/grid_search",
+    "crates/screener",
+    "crates/bindings",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.78"
+license = "MIT"
+authors = ["zettaranc contributors"]
+
+[workspace.dependencies]
+# 序列化 / 错误
+thiserror = "1.0"
+anyhow = "1.0"
+# 异步日志（仅错误透传用，不引入 tokio）
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# 数据栈
+polars = { version = "0.54", default-features = false, features = ["dtype-full", "temporal", "strings"] }
+arrow-array = "59"
+arrow-schema = "59"
+# 并行
+rayon = "1.10"
+# 测试
+proptest = "1.5"
+approx = "0.5"
+
+# 仅在 bindings crate 中使用 pyo3 / pyo3-polars。
+# workspace 依赖不能加 optional，所以这里不带 optional，由 bindings/Cargo.toml 自行启用 feature。
+pyo3 = { version = "0.23", features = ["extension-module", "abi3-py312"] }
+pyo3-polars = { version = "0.10", git = "https://github.com/ritchie46/polars", features = ["lazy"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

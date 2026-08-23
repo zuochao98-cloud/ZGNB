@@ -1,0 +1,115 @@
+# 临时文件
+merge_output*.txt
+PHASE2_SYNTHESIS.md
+*.log
+
+# 环境变量（包含敏感信息）
+.env
+.env.local
+.env.*.local
+
+# 本地数据（SQLite 数据库，体积大且个人化，不入库）
+data/
+*.db
+*.sqlite
+
+# 原始语料（体积大、版权问题，仓库中仅保留调研提炼文件和 SKILL.md）
+references/sources/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.egg-info/
+*.egg
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Lint / test caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.python-version
+.ropeproject/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*.backup
+
+
+# 文档转换临时文件
+~$*.docx
+
+# AI configs
+.claude
+CLAUDE.md
+CLAUDE.md.bak
+GEMINI.md
+.omc/
+.omo/
+.kimi/
+
+# 根目录空 lockfile（真正的在 frontend/ 目录）
+/package-lock.json
+
+# 对话实录（临时文件，不入库）
+对话实录*.md
+
+# 日志文件（临时文件，不入库）
+logs/*.log
+logs/*.jsonl
+
+# 二进制工具（应通过包管理器安装）
+actionlint
+
+# Darwin self-optimizer artifacts (regenerated each run)
+optimization_drafts/
+logs/results.tsv
+logs/self_optimizer_state.json
+
+.worktrees/
+
+# 工作区临时文件
+.workbuddy/
+
+# 前端构建产物
+frontend/frontend@0.0.0
+frontend/vite
+
+# 数据报告输出（自动生成，不入库）
+data/reports/
+.superpowers/
+design-demos/
+
+# Python venv (added 2026-07-18)
+.venv311/
+
+# Rust build artifacts (added 2026-07-18)
+rust/target/
+
+.venv312/
+
+# 浏览器自检缓存
+.playwright-mcp/
+
+# 仪表盘 / 截图测试产物
+dashboard*.png
+stock-analysis.png
+
+# 根目录 uv.lock（子包自有锁文件；2026-08-05 加入）
+/uv.lock

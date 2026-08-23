@@ -1,0 +1,116 @@
+name: rust-ci
+
+on:
+  pull_request:
+    paths:
+      - "rust/**"
+      - "python/**"
+      - "pyproject.toml"
+      - ".github/workflows/rust-ci.yml"
+  push:
+    branches: [main, feature/rust-core-compute]
+
+jobs:
+  test-rust:
+    name: cargo test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      # Override rust/.cargo/config.toml aarch64 lld flags
+      # (CI runners don't have /opt/homebrew/bin/ld64.lld installed)
+      RUSTFLAGS:
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python (macos pyo3 max 3.13)
+        if: matrix.os == 'macos-latest'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.78.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry & target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: cargo fmt --check
+        working-directory: rust
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        working-directory: rust
+        # Run on our crates only (--no-deps). Exclude zt_bindings since it
+        # uses ToPyObject/PyList::empty_bound deprecations (PyO3 0.23→0.24
+        # migration, tracked in v4.0.3 follow-ups).
+        # Allow stylistic lints (needless_range_loop, len_zero, etc.).
+        run: |
+          cargo clippy --workspace --all-targets --no-deps --exclude zt_bindings -- \
+            -D warnings \
+            -A clippy::needless_range_loop \
+            -A clippy::len_zero \
+            -A clippy::type_complexity \
+            -A dead_code
+
+      - name: cargo test
+        working-directory: rust
+        run: cargo test --workspace --exclude zt_bindings
+
+  test-python:
+    name: python smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      RUSTFLAGS:
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.78.0
+
+      - name: Create venv
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install maturin pytest polars pyarrow
+          # pyo3 0.23 supports Python ≤3.13; explicit Python interpreter avoids 3.14 default on macos
+          echo "PYO3_PYTHON=$VIRTUAL_ENV/bin/python" >> $GITHUB_ENV
+
+      - name: Build _core_compute
+        run: |
+          source .venv/bin/activate
+          cd rust/crates/bindings
+          maturin develop --release
+
+      - name: Smoke import
+        run: |
+          source .venv/bin/activate
+          python -c "import _core_compute; print(_core_compute.__version__)"

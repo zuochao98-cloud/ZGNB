@@ -1,0 +1,11 @@
+[package]
+name = "zt_indicators"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+zt_core_types = { path = "../core_types" }
+
+[dev-dependencies]
+proptest = { workspace = true }

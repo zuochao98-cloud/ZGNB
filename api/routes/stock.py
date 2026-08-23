@@ -1,0 +1,48 @@
+"""股票分析路由"""
+
+from fastapi import APIRouter, HTTPException, Query
+
+from api.models.stock import (
+    StockAnalysisResponse,
+    KlineChartResponse,
+    FullIndicatorResponse,
+)
+from api.services import stock_service
+
+router = APIRouter()
+
+
+@router.get("/analyze/{ts_code}", response_model=StockAnalysisResponse)
+def analyze_stock(ts_code: str, days: int = Query(default=120, ge=10, le=1000)):
+    """全量分析：指标 + 战法 + 评分 + 诊断"""
+    try:
+        return stock_service.get_full_analysis(ts_code, days)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"分析失败: {e}")
+
+
+@router.get("/analyze/{ts_code}/klines", response_model=KlineChartResponse)
+def get_klines(ts_code: str, days: int = Query(default=120, ge=10, le=1000)):
+    """获取 K 线图表数据（ECharts 列式格式）"""
+    try:
+        return stock_service.get_kline_chart_data(ts_code, days)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取 K 线失败: {e}")
+
+
+@router.get("/analyze/{ts_code}/signals")
+def get_signals(ts_code: str, days: int = Query(default=120, ge=10, le=1000)):
+    """获取战法信号列表"""
+    try:
+        return stock_service.get_signals(ts_code, days)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取信号失败: {e}")
+
+
+@router.get("/score/{ts_code}")
+def get_score(ts_code: str):
+    """获取综合评分"""
+    try:
+        return stock_service.get_score(ts_code)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取评分失败: {e}")

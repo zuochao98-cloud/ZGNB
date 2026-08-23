@@ -1,0 +1,172 @@
+{
+  "name": "zettaranc-skill",
+  "version": "4.1.0",
+  "description": "A股唯一可运行的交易纪律蒸馏系统——从200万字语料到可回测可自改进的交易操作系统",
+  "author": {
+    "name": "lululu811",
+    "email": "",
+    "url": "https://github.com/lululu811"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lululu811/zettaranc-skill.git"
+  },
+  "homepage": "https://github.com/lululu811/zettaranc-skill",
+  "keywords": [
+    "A股",
+    "量化交易",
+    "技术分析",
+    "交易策略",
+    "AI Skill",
+    "Claude Code",
+    "交易纪律",
+    "人格蒸馏",
+    "自我改进"
+  ],
+  "categories": [
+    "finance",
+    "trading",
+    "analysis",
+    "ai-skill"
+  ],
+  "tags": [
+    "stock",
+    "trading",
+    "quantitative",
+    "technical-analysis",
+    "investment",
+    "china",
+    "a-share"
+  ],
+  "requirements": {
+    "python": ">=3.10",
+    "dependencies": [
+      "tushare",
+      "pandas",
+      "python-dotenv",
+      "requests"
+    ],
+    "optional_dependencies": {
+      "jnb_mode": [
+        "tushare>=1.4.0"
+      ],
+      "websearch_mode": []
+    }
+  },
+  "installation": {
+    "quick_start": {
+      "description": "30秒体验（无需Token）",
+      "commands": [
+        "git clone https://github.com/lululu811/zettaranc-skill.git",
+        "cd zettaranc-skill",
+        "pip install -r requirements.txt",
+        "pip install -e .",
+        "echo 'DATA_MODE=websearch' > .env",
+        "zt analyze 600519.SH"
+      ]
+    },
+    "full_install": {
+      "description": "完整安装（接入真实行情）",
+      "commands": [
+        "git clone https://github.com/lululu811/zettaranc-skill.git",
+        "cd zettaranc-skill",
+        "pip install -r requirements.txt",
+        "pip install -e .",
+        "cp .env.example .env",
+        "# 编辑 .env 填入 TUSHARE_TOKEN",
+        "python -m modules.database",
+        "python -m modules.data_sync sync",
+        "zt analyze 600519.SH --json"
+      ]
+    }
+  },
+  "modes": {
+    "websearch": {
+      "description": "零配置模式，无需Token，纯框架分析",
+      "env": "DATA_MODE=websearch",
+      "features": [
+        "交易框架问答",
+        "概念解释",
+        "职业/人生决策",
+        "历史案例讨论"
+      ]
+    },
+    "jnb": {
+      "description": "完整模式，接入Tushare真实行情",
+      "env": "DATA_MODE=jnb",
+      "features": [
+        "实时行情分析",
+        "技术指标计算",
+        "战法自动识别",
+        "策略回测",
+        "智能选股",
+        "Walk-forward参数寻优"
+      ],
+      "requirements": [
+        "TUSHARE_TOKEN",
+        "TUSHARE_API_URL"
+      ]
+    }
+  },
+  "capabilities": [
+    {
+      "name": "意图识别",
+      "description": "自动识别stock/career/life/chat四种意图",
+      "command": "zt workflow"
+    },
+    {
+      "name": "股票分析",
+      "description": "60+技术指标，30+战法自动识别",
+      "command": "zt analyze <ts_code>"
+    },
+    {
+      "name": "策略回测",
+      "description": "少妇战法/多策略融合/组合回测/Walk-forward寻优",
+      "command": "zt backtest shaofu <ts_code>"
+    },
+    {
+      "name": "智能选股",
+      "description": "曼城评分+战法共振+环境权重",
+      "command": "zt screen --strategy B1"
+    },
+    {
+      "name": "观察池管理",
+      "description": "自选股批量监控，每日信号扫描",
+      "command": "zt watchlist scan"
+    },
+    {
+      "name": "交易记录",
+      "description": "记录/查询/复盘交易",
+      "command": "zt trade add"
+    }
+  ],
+  "test_prompts": "test-prompts.json",
+  "quality_metrics": {
+    "tests": "1383 passed",
+    "quality_check": "100/100",
+    "coverage": "high"
+  },
+  "documentation": {
+    "user_guide": "docs/USER_GUIDE.md",
+    "changelog": "docs/CHANGELOG.md",
+    "api_reference": "README.md#python-api"
+  },
+  "compatibility": {
+    "runtimes": [
+      "Claude Code",
+      "Cursor",
+      "OpenClaw"
+    ],
+    "platforms": [
+      "macOS",
+      "Linux",
+      "Windows"
+    ]
+  },
+  "disclaimer": "本Skill是分析框架，不是交易执行系统；所有输出均不构成投资建议。投资有风险，入市需谨慎。",
+  "support": {
+    "issues": "https://github.com/lululu811/zettaranc-skill/issues",
+    "discussions": "https://github.com/lululu811/zettaranc-skill/discussions"
+  }
+}
