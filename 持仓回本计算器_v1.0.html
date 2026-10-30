@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>持仓回本计算器 v1.0</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  :root{
+    --bg:#070b11;
+    --panel:#0e1520;
+    --panel-2:#121b27;
+    --line:#1d2937;
+    --line-soft:#17222e;
+    --txt:#e8eff8;
+    --muted:#8496ab;
+    --dim:#5d6c7f;
+    --amber:#f3b544;
+    --amber-soft:rgba(243,181,68,.12);
+    --teal:#31d1bd;
+    --red:#ff6f6f;
+    --green:#3fd391;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  body{
+    background:
+      radial-gradient(1100px 560px at 12% -8%,rgba(49,209,189,.09),transparent 62%),
+      radial-gradient(900px 500px at 92% -2%,rgba(243,181,68,.08),transparent 58%),
+      var(--bg);
+    color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    font-size:14px;line-height:1.6;min-height:100vh;
+    padding:36px 20px 56px;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px;margin:0 auto}
+
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield}
+
+  .hero{margin-bottom:6px}
+  .hero-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .badge{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--teal);
+    border:1px solid rgba(49,209,189,.35);background:rgba(49,209,189,.08);padding:3px 9px;border-radius:5px}
+  .ver{font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+  h1{font-size:30px;line-height:1.25;margin:0 0 8px;font-weight:650;letter-spacing:-.01em}
+  .sub{margin:0;color:var(--muted);font-size:13.5px;max-width:640px}
+
+  .tabs{display:inline-flex;gap:4px;padding:5px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;margin:26px 0 18px;flex-wrap:wrap}
+  .tab{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:13.5px;
+    padding:9px 16px;border-radius:8px;cursor:pointer;transition:background .18s,color .18s}
+  .tab:hover{color:var(--txt)}
+  .tab.active{background:var(--amber-soft);color:var(--amber);box-shadow:inset 0 0 0 1px rgba(243,181,68,.28)}
+
+  .panel{display:none}
+  .panel.active{display:block;animation:fade .28s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .panel-head{margin:0 0 18px}
+  .panel-head h2{font-size:17px;margin:0 0 6px;font-weight:600;letter-spacing:.01em}
+  .panel-head p{margin:0;color:var(--muted);font-size:13px;max-width:720px}
+  .sub-head{margin-top:34px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 20px 22px}
+
+  .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field span{font-size:12px;color:var(--muted)}
+  .field input{
+    background:#0a1119;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    color:var(--txt);font-family:var(--mono);font-size:14.5px;outline:none;
+    transition:border-color .18s,box-shadow .18s;width:100%;
+  }
+  .field input:focus{border-color:rgba(243,181,68,.65);box-shadow:0 0 0 3px rgba(243,181,68,.10)}
+
+  .note{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:16px;font-size:12.5px;color:var(--muted)}
+  .chip{background:var(--panel-2);border:1px solid var(--line);border-radius:999px;
+    padding:4px 12px;font-family:var(--mono);font-size:12.5px;color:var(--txt)}
+  .chip b{font-weight:600}
+  .neg{color:var(--red)!important}
+  .pos{color:var(--green)!important}
+  .amber{color:var(--amber)!important}
+
+  .results{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-top:18px}
+  .stat{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;display:flex;flex-direction:column;gap:3px;min-width:0}
+  .stat .k{font-size:11.5px;color:var(--muted);letter-spacing:.03em}
+  .stat .v{font-family:var(--mono);font-size:22px;font-weight:600;line-height:1.25;
+    font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat .h{font-size:11.5px;color:var(--dim);font-family:var(--mono);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .stat.accent{border-color:rgba(243,181,68,.45);
+    background:linear-gradient(180deg,rgba(243,181,68,.10),rgba(243,181,68,.02))}
+  .stat.accent .v{color:var(--amber);font-size:27px}
+  .stat.small{padding:12px 14px}
+  .stat.small .v{font-size:19px}
+
+  .tip{margin:18px 0 0;font-size:12px;color:var(--dim);line-height:1.7;
+    border-left:2px solid var(--line);padding-left:12px}
+
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:700px}
+  th{font-weight:500;color:var(--muted);font-size:11.5px;text-align:right;padding:11px 12px;
+    background:var(--panel-2);border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  td{padding:7px 12px;border-bottom:1px solid var(--line-soft);text-align:right;
+    font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  tfoot td{background:var(--panel-2);font-weight:600;border-top:1px solid var(--line);border-bottom:0;padding:11px 12px}
+
+  .gi{width:100%;background:transparent;border:0;border-bottom:1px dashed var(--line);
+    color:var(--txt);font-family:var(--mono);font-size:13px;padding:6px 3px;text-align:right;outline:none}
+  .gi:focus{border-bottom-color:var(--amber);background:rgba(243,181,68,.06)}
+  .gi.txt{text-align:left;font-family:inherit}
+  .cell-del{text-align:center;width:38px}
+  .del{appearance:none;border:1px solid transparent;background:transparent;color:var(--dim);
+    font-size:16px;line-height:1;cursor:pointer;border-radius:6px;padding:2px 7px;font-family:var(--mono)}
+  .del:hover{color:var(--red);border-color:rgba(255,111,111,.3);background:rgba(255,111,111,.08)}
+
+  .row-actions{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);
+    font:inherit;font-size:12.5px;padding:8px 14px;border-radius:9px;cursor:pointer;transition:.18s}
+  .btn:hover{color:var(--txt);border-color:rgba(49,209,189,.45);background:rgba(49,209,189,.08)}
+
+  .quick{margin-top:26px;border-top:1px dashed var(--line);padding-top:20px}
+  .quick-head{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+  .quick .fields{align-items:end}
+
+  .foot{margin-top:44px;border-top:1px solid var(--line);padding-top:18px;color:var(--dim);font-size:11.5px}
+  .ver-record{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;color:var(--muted)}
+  .ver-record strong{color:var(--txt);font-weight:600;font-size:12px}
+  .ver-record .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block}
+  .ver-record span{font-family:var(--mono);font-size:11px}
+  .disclaimer{margin:0;line-height:1.7;max-width:840px}
+
+  @media (max-width:640px){
+    body{padding:24px 14px 44px}
+    h1{font-size:24px}
+    .results{grid-template-columns:repeat(2,1fr)}
+    .stat .v{font-size:19px}
+    .stat.accent .v{font-size:23px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-top">
+      <span class="badge">CALCULATOR</span>
+      <span class="ver">v1.0 · 2026-10-30</span>
+    </div>
+    <h1>持仓回本计算器</h1>
+    <p class="sub">补仓摊平 → 组合回本 → 单票扛回本，三个口径一页算清。输入即算，无需联网。</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="single">① 个股补仓</button>
+    <button class="tab" data-tab="portfolio">② 组合回本</button>
+    <button class="tab" data-tab="ref">③ 速查与单票</button>
+  </nav>
+
+  <!-- ① 个股补仓 -->
+  <section class="panel active" id="panel-single">
+    <div class="card">
+      <div class="panel-head">
+        <h2>个股补仓摊平</h2>
+        <p>输入成本价、现价与原持股数，设定一个目标浮亏，算出需要补多少股、花多少钱，以及补完后回本要涨多少。</p>
+      </div>
+      <div class="fields">
+        <label class="field"><span>成本价（元）</span><input id="s-cost" type="number" step="0.01" min="0" value="10"></label>
+        <label class="field"><span>现价（元）</span><input id="s-price" type="number" step="0.01" min="0" value="9"></label>
+        <label class="field"><span>原持股数（股）</span><input id="s-shares" type="number" step="1" min="0" value="700"></label>
+        <label class="field"><span>目标浮亏（%，填正数）</span><input id="s-target" type="number" step="0.1" min="0.1" value="5"></label>
+      </div>
+      <div class="note">
+        <span class="chip">当前浮亏 <b id="s-cur">—</b></span>
+        <span id="s-msg"></span>
+      </div>
+      <div class="results">
+        <div class="stat"><span class="k">需补仓股数</span><b class="v" id="r-n">—</b><span class="h" id="r-nh"></span></div>
+        <div class="stat"><span class="k">补仓金额</span><b class="v" id="r-amt">—</b><span class="h" id="r-amt-h"></span></div>
+        <div class="stat"><span class="k">补后总股数</span><b class="v" id="r-total">—</b><span class="h" id="r-total-h"></span></div>
+        <div class="stat"><span class="k">补后均价</span><b class="v" id="r-avg">—</b><span class="h" id="r-avg-h"></span></div>
+        <div class="stat accent"><span class="k">回本涨幅</span><b class="v" id="r-back">—</b><span class="h" id="r-back-h"></span></div>
+      </div>
+      <p class="tip">补仓股数 = 原持股 ×（当前浮亏 − 目标浮亏）÷［(1 − 当前浮亏) × 目标浮亏］；回本涨幅 = 目标浮亏 ÷（1 − 目标浮亏）。目标浮亏填 0 需要无限资金，故必须大于 0。</p>
+    </div>
+  </section>
+
+  <!-- ② 组合回本 -->
+  <section class="panel" id="panel-portfolio">
+    <div class="card">
+      <div class="panel-head">
+        <h2>组合回本</h2>
+        <p>把每只股票的成本与市值列出来，汇总得到“总市值要涨多少才能覆盖全部成本”——组合层面只认这一个比值。</p>
+      </div>
+      <div class="tbl-wrap">
+        <table id="pf-table">
+          <thead>
+            <tr><th>名称</th><th>持股数</th><th>成本价</th><th>现价</th><th>成本金额</th><th>市值</th><th>浮亏率</th><th></th></tr>
+          </thead>
+          <tbody id="pf-body"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">合计</td>
+              <td id="pf-cost">—</td>
+              <td id="pf-mv">—</td>
+              <td id="pf-rate">—</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="row-actions"><button class="btn" id="pf-add">+ 增加一行</button></div>
+
+      <div class="results">
+        <div class="stat"><span class="k">组合总成本</span><b class="v" id="p-cost">—</b></div>
+        <div class="stat"><span class="k">组合总市值</span><b class="v" id="p-mv">—</b></div>
+        <div class="stat"><span class="k">综合浮亏</span><b class="v" id="p-loss">—</b><span class="h" id="p-loss-h"></span></div>
+        <div class="stat accent"><span class="k">组合回本涨幅</span><b class="v" id="p-back">—</b><span class="h" id="p-back-h"></span></div>
+        <div class="stat"><span class="k">需增加市值</span><b class="v" id="p-gap">—</b><span class="h">= 亏损金额</span></div>
+      </div>
+
+      <div class="quick">
+        <div class="quick-head">快捷口径 · 只有总数也能算</div>
+        <div class="fields">
+          <label class="field"><span>总成本（元）</span><input id="q-cost" type="number" step="0.01" value="26000"></label>
+          <label class="field"><span>总市值（元）</span><input id="q-mv" type="number" step="0.01" value="24200"></label>
+          <div class="stat small accent"><span class="k">综合浮亏</span><b class="v" id="q-loss">—</b></div>
+          <div class="stat small accent"><span class="k">回本涨幅</span><b class="v" id="q-back">—</b></div>
+        </div>
+      </div>
+
+      <p class="tip">组合回本涨幅 =（总成本 − 总市值）÷ 总市值。该结果<strong>与持仓结构无关</strong>，仅在“全线同比例上涨”时成立；若只靠个别股票拉回，请看“③ 速查与单票”。</p>
+    </div>
+  </section>
+
+  <!-- ③ 速查与单票 -->
+  <section class="panel" id="panel-ref">
+    <div class="card">
+      <div class="panel-head">
+        <h2>回本涨幅速查</h2>
+        <p>无论个股还是组合，回本涨幅只由浮亏决定：R = L ÷（1 − L）。下表以总成本 10 万元为例。</p>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>浮亏</th><th>回本涨幅</th><th>需增加市值</th><th>当前市值（成本 10 万）</th></tr></thead>
+          <tbody id="ref-body"></tbody>
+        </table>
+      </div>
+
+      <div class="panel-head sub-head">
+        <h2>单票扛回本</h2>
+        <p>组合里只有一只股票上涨、其余不动时，它需要涨多少才能把整个组合拉回成本。</p>
+      </div>
+      <div class="fields">
+        <label class="field"><span>组合综合浮亏（%）</span><input id="k-loss" type="number" step="0.1" value="10"></label>
+        <label class="field"><span>该股占组合市值比重（%）</span><input id="k-w" type="number" step="1" min="1" max="100" value="50"></label>
+      </div>
+      <div class="row-actions"><button class="btn" id="k-pull">← 取「②组合回本」的综合浮亏</button></div>
+      <div class="results">
+        <div class="stat accent"><span class="k">该股需上涨</span><b class="v" id="k-back">—</b><span class="h" id="k-back-h"></span></div>
+      </div>
+      <div class="tbl-wrap" style="margin-top:16px">
+        <table>
+          <thead><tr><th>该股占组合市值</th><th>需上涨</th></tr></thead>
+          <tbody id="k-body"></tbody>
+        </table>
+      </div>
+      <p class="tip">单票需涨幅 = 组合浮亏 ÷［权重 ×（1 − 组合浮亏）］。仓位越分散，指望单只拉动组合所需的涨幅越夸张。</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="ver-record">
+      <span class="dot"></span>
+      <strong>版本记录</strong>
+      <span>v1.0 · 2026-10-30 · 初版：个股补仓摊平、组合回本汇总、单票扛回本、回本涨幅速查</span>
+    </div>
+    <p class="disclaimer">
+      口径：不考虑手续费、印花税、滑点与除权除息；补仓按现价成交；个股“回本”指价格涨到补后均价，组合“回本”指总市值涨回总成本。所有结果均为算术推演，不构成投资建议。
+    </p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var el = function(id){ return document.getElementById(id); };
+  var num = function(v){ var n = parseFloat(v); return Number.isFinite(n) ? n : NaN; };
+  var pct = function(x, d){ d = d === undefined ? 2 : d; return Number.isFinite(x) ? (x * 100).toFixed(d) + '%' : '—'; };
+  var money = function(x){ return Number.isFinite(x) ? '¥' + Math.round(x).toLocaleString('zh-CN') : '—'; };
+  var price = function(x, d){ d = d === undefined ? 2 : d; return Number.isFinite(x) ? x.toFixed(d) : '—'; };
+  var int = function(x){ return Number.isFinite(x) ? Math.round(x).toLocaleString('zh-CN') : '—'; };
+
+  /* ---------- 选项卡 ---------- */
+  var tabs = document.querySelectorAll('.tab');
+  Array.prototype.forEach.call(tabs, function(t){
+    t.addEventListener('click', function(){
+      Array.prototype.forEach.call(tabs, function(x){ x.classList.toggle('active', x === t); });
+      ['single','portfolio','ref'].forEach(function(k){
+        el('panel-' + k).classList.toggle('active', k === t.getAttribute('data-tab'));
+      });
+    });
+  });
+
+  /* ---------- ① 个股补仓 ---------- */
+  function single(){
+    var c0 = num(el('s-cost').value), p = num(el('s-price').value);
+    var q = num(el('s-shares').value), tIn = num(el('s-target').value);
+
+    var ids = ['r-n','r-nh','r-amt','r-amt-h','r-total','r-total-h','r-avg','r-avg-h','r-back','r-back-h'];
+    function clear(){
+      ids.forEach(function(i){ el(i).textContent = i.indexOf('-h') > -1 ? '' : '—'; });
+    }
+
+    if (!(c0 > 0 && p > 0 && q > 0)) {
+      clear();
+      el('s-cur').textContent = '—';
+      el('s-cur').className = '';
+      el('s-msg').textContent = '请补全成本价、现价与持股数。';
+      return;
+    }
+
+    var L0 = (c0 - p) / c0;
+    el('s-cur').textContent = pct(L0);
+    el('s-cur').className = L0 > 0 ? 'neg' : (L0 < 0 ? 'pos' : '');
+
+    var t = Math.abs(tIn) / 100;
+    if (!(t > 0)) {
+      clear();
+      el('s-msg').textContent = '目标浮亏必须大于 0%（压到 0% 需要无限资金）。';
+      return;
+    }
+    if (L0 <= 0) {
+      clear();
+      el('s-msg').textContent = '现价高于成本，当前为浮盈，无需补仓摊平。';
+      return;
+    }
+    if (L0 >= t) {
+      clear();
+      el('r-n').textContent = '0';
+      el('r-amt').textContent = '¥0';
+      el('r-total').textContent = int(q);
+      el('r-avg').textContent = price(c0);
+      el('r-back').textContent = '0.00%';
+      el('s-msg').textContent = '当前浮亏已低于目标浮亏，无需补仓。';
+      return;
+    }
+
+    var raw = q * (L0 - t) / ((1 - L0) * t);
+    var n = Math.ceil(raw);
+    var amt = n * p;
+    var total = q + n;
+    var avg = (q * c0 + n * p) / total;
+    var back = (avg - p) / p;
+
+    el('s-msg').textContent = '补仓后浮亏压到 ' + pct(-t) + '（目标值）。';
+    el('r-n').textContent = n.toLocaleString('zh-CN');
+    el('r-nh').textContent = '精确 ' + raw.toFixed(1) + ' 股 · 约 ' + Math.ceil(n / 100) + ' 手';
+    el('r-amt').textContent = money(amt);
+    el('r-amt-h').textContent = '≈ 原成本金额的 ' + pct((L0 - t) / t, 0);
+    el('r-total').textContent = int(total);
+    el('r-total-h').textContent = int(q) + ' + ' + n.toLocaleString('zh-CN') + ' 股';
+    el('r-avg').textContent = price(avg);
+    el('r-avg-h').textContent = '补仓倍数 ' + (n / q).toFixed(2) + '×';
+    el('r-back').textContent = pct(back);
+    el('r-back-h').textContent = price(p) + ' → ' + price(avg) + ' 回本';
+  }
+
+  /* ---------- ② 组合回本 ---------- */
+  var lastPortfolioLoss = NaN;
+
+  function addRow(d){
+    d = d || {};
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input class="gi txt in-name" value="' + (d.name || '') + '" placeholder="名称"></td>' +
+      '<td><input class="gi in-q" type="number" step="1" min="0" value="' + (d.q === undefined ? '' : d.q) + '"></td>' +
+      '<td><input class="gi in-c" type="number" step="0.01" min="0" value="' + (d.c === undefined ? '' : d.c) + '"></td>' +
+      '<td><input class="gi in-p" type="number" step="0.01" min="0" value="' + (d.p === undefined ? '' : d.p) + '"></td>' +
+      '<td class="out-c">—</td>' +
+      '<td class="out-v">—</td>' +
+      '<td class="out-r">—</td>' +
+      '<td class="cell-del"><button class="del" title="删除此行">&times;</button></td>';
+
+    Array.prototype.forEach.call(tr.querySelectorAll('input'), function(i){
+      i.addEventListener('input', pf);
+    });
+    tr.querySelector('.del').addEventListener('click', function(){ tr.remove(); pf(); });
+    el('pf-body').appendChild(tr);
+  }
+
+  function pf(){
+    var cost = 0, mv = 0, any = false;
+
+    Array.prototype.forEach.call(el('pf-body').querySelectorAll('tr'), function(tr){
+      var q = num(tr.querySelector('.in-q').value);
+      var c = num(tr.querySelector('.in-c').value);
+      var p = num(tr.querySelector('.in-p').value);
+      var ok = q > 0 && c > 0 && p > 0;
+
+      var cA = ok ? q * c : NaN;
+      var mA = ok ? q * p : NaN;
+      var r  = ok ? (c - p) / c : NaN;
+
+      tr.querySelector('.out-c').textContent = ok ? money(cA) : '—';
+      tr.querySelector('.out-v').textContent = ok ? money(mA) : '—';
+
+      var rc = tr.querySelector('.out-r');
+      rc.textContent = ok ? pct(r) : '—';
+      rc.className = 'out-r ' + (ok ? (r > 0 ? 'neg' : (r < 0 ? 'pos' : '')) : '');
+
+      if (ok) { cost += cA; mv += mA; any = true; }
+    });
+
+    el('pf-cost').textContent = any ? money(cost) : '—';
+    el('pf-mv').textContent = any ? money(mv) : '—';
+
+    var rate = any ? (cost - mv) / cost : NaN;
+    el('pf-rate').textContent = any ? pct(rate) : '—';
+    el('pf-rate').className = any ? (rate > 0 ? 'neg' : 'pos') : '';
+
+    el('p-cost').textContent = any ? money(cost) : '—';
+    el('p-mv').textContent = any ? money(mv) : '—';
+    el('p-loss').textContent = any ? pct(rate) : '—';
+    el('p-loss-h').textContent = any ? '盈亏 ' + money(mv - cost) : '';
+
+    var back = any && mv > 0 ? (cost - mv) / mv : NaN;
+    el('p-back').textContent = any ? pct(back) : '—';
+    el('p-back-h').textContent = any ? '总市值需涨至 ' + money(cost) : '';
+    el('p-gap').textContent = any ? money(cost - mv) : '—';
+
+    lastPortfolioLoss = any ? Math.abs(rate) : NaN;
+  }
+
+  function quick(){
+    var c = num(el('q-cost').value), v = num(el('q-mv').value);
+    if (!(c > 0 && v > 0)) {
+      el('q-loss').textContent = '—'; el('q-loss').className = 'v';
+      el('q-back').textContent = '—'; el('q-back').className = 'v';
+      return;
+    }
+    var rate = (c - v) / c;
+    el('q-loss').textContent = pct(rate);
+    el('q-loss').className = 'v ' + (rate > 0 ? 'neg' : 'pos');
+    el('q-back').textContent = pct((c - v) / v);
+  }
+
+  /* ---------- ③ 速查与单票 ---------- */
+  function refTable(){
+    var list = [1,2,3,4,5,6,8,10,15,20,25,30,40,50];
+    var tb = el('ref-body');
+    tb.innerHTML = '';
+    list.forEach(function(lp){
+      var L = lp / 100;
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>-' + lp + '%</td>' +
+        '<td class="amber">' + pct(L / (1 - L)) + '</td>' +
+        '<td>' + money(100000 * L) + '</td>' +
+        '<td>' + money(100000 * (1 - L)) + '</td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  function ticket(){
+    var L = Math.abs(num(el('k-loss').value)) / 100;
+    var w = Math.abs(num(el('k-w').value)) / 100;
+    var valid = L > 0 && L < 1 && w > 0 && w <= 1;
+
+    el('k-back').textContent = valid ? pct(L / (w * (1 - L))) : '—';
+    el('k-back-h').textContent = valid
+      ? '组合浮亏 ' + pct(L) + ' 由这一只独自承担'
+      : '请填写 0–100 之间的浮亏与权重';
+
+    var tb = el('k-body');
+    tb.innerHTML = '';
+    [100,70,50,30,20,10].forEach(function(x){
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + x + '%</td>' +
+        '<td>' + (valid ? pct(L / ((x / 100) * (1 - L))) : '—') + '</td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  /* ---------- 初始化 ---------- */
+  ['s-cost','s-price','s-shares','s-target'].forEach(function(id){ el(id).addEventListener('input', single); });
+  ['q-cost','q-mv'].forEach(function(id){ el(id).addEventListener('input', quick); });
+  ['k-loss','k-w'].forEach(function(id){ el(id).addEventListener('input', ticket); });
+
+  el('pf-add').addEventListener('click', function(){ addRow(); pf(); });
+  el('k-pull').addEventListener('click', function(){
+    if (Number.isFinite(lastPortfolioLoss)) {
+      el('k-loss').value = (lastPortfolioLoss * 100).toFixed(2);
+      ticket();
+    }
+  });
+
+  [{name:'A', q:700, c:10, p:9},
+   {name:'B', q:500, c:20, p:16},
+   {name:'C', q:300, c:30, p:33}].forEach(addRow);
+
+  refTable();
+  single();
+  pf();
+  quick();
+  ticket();
+})();
+</script>
+</body>
+</html>
