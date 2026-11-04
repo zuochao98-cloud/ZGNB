@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>账户回本涨幅计算器 · v2.0</title>
+<style>
+  :root{
+    --bg:#0b0e13;
+    --panel:#141922;
+    --panel-2:#1b2230;
+    --line:#2a3242;
+    --text:#e7edf7;
+    --muted:#8a97ab;
+    --red:#ff5c5c;
+    --red-soft:rgba(255,92,92,.12);
+    --green:#22d39a;
+    --green-soft:rgba(34,211,154,.12);
+    --gold:#f5c451;
+    --cyan:#4fb6ff;
+    --cyan-soft:rgba(79,182,255,.12);
+    --magenta:#ff7ad1;
+    --magenta-soft:rgba(255,122,209,.12);
+    --mono:"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(255,92,92,.08), transparent 60%),
+      radial-gradient(1000px 500px at 90% 110%, rgba(34,211,154,.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    min-height:100vh;
+    padding:36px 20px 60px;
+    line-height:1.6;
+  }
+  .wrap{max-width:1060px;margin:0 auto}
+
+  header{margin-bottom:26px}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red)}
+  h1{font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.02em;margin-top:10px}
+  h1 span{color:var(--red)}
+  .sub{color:var(--muted);font-size:14px;margin-top:8px}
+
+  .formula{
+    margin-top:14px;display:inline-block;font-family:var(--mono);font-size:13px;color:#aab6c9;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;
+  }
+  .formula b{color:var(--green);font-weight:600}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+
+  .card{
+    background:linear-gradient(180deg,var(--panel),#111620);
+    border:1px solid var(--line);border-radius:16px;padding:22px;
+    box-shadow:0 20px 40px -24px rgba(0,0,0,.8);
+  }
+  .card h2{font-size:14px;font-weight:600;color:var(--muted);letter-spacing:.06em;margin-bottom:16px}
+  .card h2 em{font-style:normal;color:var(--text);font-weight:700}
+
+  .field{margin-bottom:16px}
+  .field:last-child{margin-bottom:0}
+  .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:7px}
+  .inputline{display:flex;align-items:center;gap:8px}
+  input[type=number]{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    color:var(--text);font-family:var(--mono);font-size:18px;font-weight:600;
+    padding:10px 12px;outline:none;transition:border-color .15s;
+  }
+  input[type=number]:focus{border-color:var(--red)}
+  .unit{font-family:var(--mono);color:var(--muted);font-size:14px;min-width:22px}
+
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;margin-top:4px;
+  }
+  input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--red) 0%,var(--red) var(--p,30%),#2a3242 var(--p,30%),#2a3242 100%)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--red);margin-top:-6px;box-shadow:0 0 10px rgba(255,92,92,.6);cursor:pointer}
+  input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:#2a3242}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:var(--red);cursor:pointer}
+
+  .result{
+    display:flex;align-items:baseline;gap:8px;margin-top:6px;
+    padding:16px;border-radius:12px;background:var(--green-soft);border:1px solid rgba(34,211,154,.25);
+  }
+  .result .big{font-family:var(--mono);font-size:clamp(32px,6vw,44px);font-weight:700;color:var(--green);letter-spacing:-.02em;line-height:1}
+  .result .suffix{font-family:var(--mono);font-size:20px;color:var(--green);opacity:.8}
+  .result.red{background:var(--red-soft);border-color:rgba(255,92,92,.25)}
+  .result.red .big, .result.red .suffix{color:var(--red)}
+
+  .subgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  .mini{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .mini .k{font-size:11.5px;color:var(--muted);letter-spacing:.03em}
+  .mini .v{font-family:var(--mono);font-size:17px;font-weight:600;margin-top:4px}
+  .mini .v.red{color:var(--red)}
+  .mini .v.green{color:var(--green)}
+  .mini .v.gold{color:var(--gold)}
+  .mini .v.cyan{color:var(--cyan)}
+  .mini .v.magenta{color:var(--magenta)}
+  @media(max-width:520px){.subgrid{grid-template-columns:1fr 1fr}}
+
+  .chart{margin-top:6px}
+  svg{display:block;width:100%;height:auto}
+  .chartnote{font-size:11.5px;color:var(--muted);margin-top:6px;text-align:right}
+  .chartnote strong{color:var(--text);font-family:var(--mono)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend .sw{width:14px;height:3px;border-radius:2px}
+
+  .diff{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+  @media(max-width:520px){.diff{grid-template-columns:1fr}}
+  .diffbox{
+    border-radius:12px;padding:14px 16px;border:1px solid var(--line);background:var(--panel-2);
+  }
+  .diffbox h4{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .diffbox h4 .sw{width:10px;height:10px;border-radius:2px}
+  .diffbox .num{font-family:var(--mono);font-size:22px;font-weight:700}
+  .diffbox .num.cyan{color:var(--cyan)}
+  .diffbox .num.magenta{color:var(--magenta)}
+  .diffbox .foot{font-size:11.5px;color:var(--muted);margin-top:6px}
+
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13.5px;margin-top:4px}
+  thead th{
+    text-align:right;color:var(--muted);font-weight:500;font-size:12px;
+    padding:8px 10px;border-bottom:1px solid var(--line);letter-spacing:.03em;
+  }
+  thead th:first-child{text-align:left}
+  tbody td{padding:9px 10px;text-align:right;border-bottom:1px solid rgba(42,50,66,.5)}
+  tbody td:first-child{text-align:left;color:var(--muted)}
+  tbody tr.hot{background:var(--red-soft)}
+  tbody tr.hot td{color:var(--red)}
+  tbody tr.hot td:nth-child(2){color:var(--green)}
+  tbody tr:last-child td{border-bottom:none}
+  .bar{display:inline-block;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--gold),var(--red));vertical-align:middle;margin-right:8px;opacity:.7}
+
+  .full{grid-column:1/-1}
+  .lead{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .lead strong{color:var(--text)}
+
+  .insight{
+    display:flex;gap:14px;align-items:flex-start;
+    padding:16px;border-left:3px solid var(--gold);background:rgba(245,196,81,.06);border-radius:0 12px 12px 0;
+    font-size:13.5px;color:#cdd6e4;
+  }
+  .insight .tag{font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.08em;white-space:nowrap;padding-top:2px}
+
+  .metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:520px){.metric-row{grid-template-columns:1fr}}
+  .metric{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  }
+  .metric .m-name{font-size:11.5px;color:var(--muted);letter-spacing:.04em;margin-bottom:4px}
+  .metric .m-val{font-family:var(--mono);font-size:20px;font-weight:700}
+  .metric .m-sub{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:2px}
+
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+  footer .row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  footer .ver{font-family:var(--mono);color:var(--text);font-size:12px}
+  .disclaimer{margin-top:10px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow"><span class="dot"></span>复利回本计算器 · v2.0 · 2026-11-04</div>
+    <h1>亏掉的部分，需要<span>更大的涨幅</span>才能填平</h1>
+    <div class="sub">同样是 20%，亏损和回本的幅度并不对等。v2.0 新增<strong>纪律止损 / 利润保护</strong>对比曲线，一眼看出来"听话"能帮你省多少时间、多赚多少钱。</div>
+    <div class="formula">回本涨幅 <b>g = d / (1 − d)</b>　·　纪律修复：<b>VB(t) = (1 − min(d, SL)) × (1 + r)^t</b></div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ① 回撤 → 回本涨幅 -->
+    <section class="card">
+      <h2>① 已知<em>亏损幅度</em> → 需要多少涨幅回本</h2>
+
+      <div class="field">
+        <label>账户从高点回撤了多少？</label>
+        <div class="inputline">
+          <input id="ddInput" type="number" min="0" max="99.99" step="0.1" value="30" inputmode="decimal">
+          <span class="unit">%</span>
+        </div>
+        <input id="ddRange" type="range" min="0" max="90" step="0.5" value="30">
+      </div>
+
+      <div class="result">
+        <span class="big" id="needGain">+42.86</span>
+        <span class="suffix">%</span>
+      </div>
+
+      <div class="subgrid">
+        <div class="mini"><div class="k">剩余本金</div><div class="v red" id="remain">70.00%</div></div>
+        <div class="mini"><div class="k">回本需涨（倍数）</div><div class="v gold" id="mult">1.43 倍</div></div>
+        <div class="mini"><div class="k">每 1% 亏损需涨</div><div class="v green" id="perPct">+1.43%</div></div>
+      </div>
+    </section>
+
+    <!-- ② 金额 + 年化 → 回本耗时 -->
+    <section class="card">
+      <h2>② 已知<em>账户金额</em> → 算回撤与回本耗时</h2>
+
+      <div class="field">
+        <label>账户历史最高市值（元）</label>
+        <div class="inputline">
+          <input id="peakInput" type="number" min="1" step="1000" value="100000" inputmode="decimal">
+          <span class="unit">元</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>当前市值（元）</label>
+        <div class="inputline">
+          <input id="nowInput" type="number" min="0" step="1000" value="70000" inputmode="decimal">
+          <span class="unit">元</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>假设此后年化收益率（复利）</label>
+        <div class="inputline">
+          <input id="rateInput" type="number" min="0.1" max="500" step="1" value="15" inputmode="decimal">
+          <span class="unit">%</span>
+        </div>
+      </div>
+
+      <div class="subgrid">
+        <div class="mini"><div class="k">当前回撤</div><div class="v red" id="dd2">30.00%</div></div>
+        <div class="mini"><div class="k">回本需涨</div><div class="v green" id="gain2">+42.86%</div></div>
+        <div class="mini"><div class="k">放任回本耗时</div><div class="v gold" id="years2">2.55 年</div></div>
+      </div>
+    </section>
+
+    <!-- ③ 纪律参数（新增 v2.0） -->
+    <section class="card full">
+      <h2>③ <em>纪律参数</em>：两条新曲线的"听话阈值"</h2>
+
+      <div class="grid" style="gap:20px">
+        <div>
+          <div class="field" style="margin-bottom:10px">
+            <label>🚨 纪律止损线 SL（单笔/单账户亏损到此就砍）</label>
+            <div class="inputline">
+              <input id="slInput" type="number" min="1" max="50" step="0.5" value="8" inputmode="decimal">
+              <span class="unit">%</span>
+            </div>
+          </div>
+          <div class="lead" style="margin-bottom:6px">当前回撤 <strong id="ddRefB">30%</strong>，若严格按 <strong id="slRefB">8%</strong> 止损，本金起点从 <strong id="startA">70%</strong> 抬高到 <strong id="startB">92%</strong>。</div>
+        </div>
+        <div>
+          <div class="field" style="margin-bottom:10px">
+            <label>💎 利润保护线 TP（涨到 到此就落袋一部分，剩余继续跑）</label>
+            <div class="inputline">
+              <input id="tpInput" type="number" min="0" max="100" step="0.5" value="5" inputmode="decimal">
+              <span class="unit">%</span>
+            </div>
+          </div>
+          <div class="lead" style="margin-bottom:6px">放任曲线先涨到 <strong>105%</strong> 的时间点（利润保护触发后），曲线 C 从 <strong id="tpAnch">105%</strong> 继续向上，不再回落。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ④ 三条净值曲线（新增 v2.0 核心） -->
+    <section class="card full">
+      <h2>④ <em>时间维度</em> 三条净值曲线对比（纵轴 = 峰值归一化净值，横轴 = 年）</h2>
+
+      <div class="chart" id="chartV"></div>
+      <div class="legend">
+        <span><span class="sw" style="background:#ff5c5c"></span>A · 放任回本 （一路持有，净值 (1−d)·(1+r)ᵗ）</span>
+        <span><span class="sw" style="background:#4fb6ff"></span>B · 纪律止损 （SL% 处砍仓，起点抬高）</span>
+        <span><span class="sw" style="background:#ff7ad1"></span>C · 利润保护 （涨到 TP% 锁利，起点锚定 1+TP）</span>
+        <span><span class="sw" style="background:#22d39a"></span>目标线 （100% = 历史峰值）</span>
+      </div>
+      <div class="chartnote"><strong id="chartTip">鼠标悬停 / 手指拖动曲线区域可看到某时刻三条曲线的具体净值差值</strong></div>
+    </section>
+
+    <!-- ⑤ 回本时间 + 差值面板（新增 v2.0） -->
+    <section class="card full">
+      <h2>⑤ <em>回本时间</em> 三档对比 & 某时刻净值差值</h2>
+
+      <div class="metric-row">
+        <div class="metric"><div class="m-name">A · 放任回本</div><div class="m-val red" id="tA">2.55 年</div><div class="m-sub">净值 (1−d) 起，年化 r</div></div>
+        <div class="metric"><div class="m-name">B · 纪律止损</div><div class="m-val cyan" id="tB">0.94 年</div><div class="m-sub">节省 <span class="m-val" id="tSave" style="font-size:14px;color:var(--cyan)">1.61 年</span></div></div>
+        <div class="metric"><div class="m-name">C · 利润保护</div><div class="m-val magenta" id="tC">— 已回本 —</div><div class="m-sub">到 TP 时已过峰</div></div>
+      </div>
+
+      <div class="diff">
+        <div class="diffbox">
+          <h4><span class="sw" style="background:#4fb6ff"></span> 纪律止损 vs 放任</h4>
+          <div class="num cyan" id="valBmA">第 3 年时 B 比 A 多赚 +32.4%</div>
+          <div class="foot">起点抬高 22%（92% vs 70%）× 复利 r，随时间线性放大（但差幅始终保持起点差的复利倍数）</div>
+        </div>
+        <div class="diffbox">
+          <h4><span class="sw" style="background:#ff7ad1"></span> 利润保护 vs 放任</h4>
+          <div class="num magenta" id="valCmA">第 3 年时 C 比 A 多赚 +41.2%</div>
+          <div class="foot">到 TP 后 C 起点整体锚定在 1+TP，之后复利滚雪球，差值是「落袋利润再投资」+「不回落」双重效应</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑥ 回撤对照表 -->
+    <section class="card">
+      <h2>⑥ 常见<em>回撤对照表</em></h2>
+      <table>
+        <thead>
+          <tr><th>回撤</th><th>所需回本涨幅</th><th>难度</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </section>
+
+    <!-- ⑦ 反向计算器 -->
+    <section class="card">
+      <h2>⑦ 反向：<em>能涨多少</em> → 相当于亏多少</h2>
+      <div class="lead">涨幅与亏损永远是<b>不对称</b>的：涨 100% 只够填平 50% 的坑。</div>
+      <div class="field">
+        <label>假设接下来能涨</label>
+        <div class="inputline">
+          <input id="gainInput" type="number" min="0" step="1" value="50" inputmode="decimal">
+          <span class="unit">%</span>
+        </div>
+      </div>
+      <div class="result red">
+        <span class="big" id="backDd">33.33</span>
+        <span class="suffix">%</span>
+      </div>
+      <div class="lead" style="margin:10px 0 0">这是该涨幅能完全填平的最大回撤。若你的回撤大于此值，涨这么多仍然回不了本。</div>
+    </section>
+
+    <!-- insight -->
+    <section class="card full" style="padding:20px 22px">
+      <div class="insight">
+        <div class="tag">记住</div>
+        <div>
+          纪律不是让你赚更多的"玄学"，而是 <b>让亏损停在它应该停的地方</b>，把"复利的起跑线"往上抬。差的不是某一天的 8%，是从第 0 年到第 N 年，22% 起点差 × 15% 年化差，复利滚下来的那一大截。利润保护同理——<b>赚到的钱要能留下来，复利才真正属于你</b>。
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="row">
+      <div>账户回本涨幅计算器 · 复利公式版</div>
+      <div class="ver">v2.0 · 2026-11-04</div>
+    </div>
+    <div class="disclaimer">
+      版本记录：<br>
+      · v2.0（2026-11-04）新增「纪律止损 / 利润保护」双曲线对比、时间维度净值曲线、回本时间差值面板。三条净值模型：<br>
+      &nbsp;&nbsp;① A 放任 VA(t) = (1−d)(1+r)ᵗ　起点 = (1−d)，年化 r<br>
+      &nbsp;&nbsp;② B 纪律 VB(t) = (1−min(d, SL))(1+r)ᵗ　起点抬高到纪律止损线，年化 r<br>
+      &nbsp;&nbsp;③ C 保护 VC(t) = t&lt;tTP ? VA(t) : (1+TP)(1+r+<b>2%</b>)^(t−tTP)　落袋后本金锚定 1+TP，年化因风险降低提升 2%（可按需调整源码 PROTECT_BOOST 常量）<br>
+      · v1.0（2026-11-03）首个版本，回撤 ↔ 回本涨幅双向计算、复利回本耗时估算、曲线与对照表。<br>
+      计算基于离散复利 (1−d)(1+g)=1，未考虑手续费、税费、分红、资金进出与主观止损执行误差，仅供个人测算参考，不构成投资建议。
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fmt = (n, dp=2) => {
+    if (!isFinite(n)) return n > 0 ? '∞' : '—';
+    return (n >= 0 ? '+' : '-') + Math.abs(n).toFixed(dp);
+  };
+
+  function gainFromDd(d){ return d / (1 - d); }            // d in (0,1) -> g
+  function ddFromGain(g){ return g / (1 + g); }            // g in (0,∞) -> d
+
+  // ---- 三条净值曲线 ----
+  // A 放任：起点 (1−d)，年化 r
+  // B 纪律：起点 (1−min(d, SL))，年化 r
+  // C 保护：t<tTP 同 A；t≥tTP 起点锚定 (1+TP) 再复利
+  function VA(t, d, r){ return (1 - d) * Math.pow(1 + r, t); }
+  function VB(t, d, sl, r){ return (1 - Math.min(d, sl)) * Math.pow(1 + r, t); }
+  // C 利润保护：t<tTP 与 A 重合；到 tTP（A 首次到 1+TP）后，落袋利润 + 风险降低，
+  // 本金从 1+TP 起点继续复利，年化略提 +2%（纪律带来的信心与仓位优势）
+  function VC(t, d, tp, r){
+    const PROTECT_BOOST = 0.02;   // 落袋后年化多跑 2%
+    if (r <= 0) return 1 - d;
+    const tTP = Math.log(Math.max((1 + tp) / (1 - d), 1)) / Math.log(1 + r);
+    if (tTP <= 0) return (1 + tp) * Math.pow(1 + r + PROTECT_BOOST, t);
+    if (t < tTP) return VA(t, d, r);
+    return (1 + tp) * Math.pow(1 + r + PROTECT_BOOST, t - tTP);
+  }
+  // 回本时间：A 首次达到 1
+  function tRepairA(d, r){ if (1-d >= 1 || r <= 0) return 0; return Math.log(1/(1-d))/Math.log(1+r); }
+  function tRepairB(d, sl, r){ const s = Math.min(d, sl); if (1-s >= 1 || r <= 0) return 0; return Math.log(1/(1-s))/Math.log(1+r); }
+  // C 的回本：t<tTP 时 = A，t≥tTP 时 C 跑 r+2%
+  function tRepairC(d, tp, r){
+    if (1 - d >= 1 || r <= 0) return 0;
+    const PROTECT_BOOST = 0.02;
+    const tTP = Math.log(Math.max((1 + tp) / (1 - d), 1)) / Math.log(1 + r);
+    // 若 A 在 tTP 之前就回本（tA ≤ tTP），则 C 和 A 同步回本
+    const tA = tRepairA(d, r);
+    if (tA <= tTP + 1e-6) return tA;
+    // 在 tTP 时 C = A = 1+TP（TP>0 时已 >1），所以其实 tTP 之后 C 永远 ≥ 1+TP > 1
+    // 只要 1+TP >= 1（总成立），C 在 tTP 时刻就已经回本
+    return tTP;
+  }
+
+  // ---- 读取输入 ----
+  function inputs(){
+    const peak = parseFloat($('peakInput').value) || 1;
+    const now  = parseFloat($('nowInput').value) || 0;
+    const d = Math.max(0, Math.min(0.9999, (peak - Math.min(now, peak)) / peak));
+    const r = (parseFloat($('rateInput').value) || 0) / 100;
+    const sl = Math.max(0, (parseFloat($('slInput').value) || 0) / 100);
+    const tp = Math.max(0, (parseFloat($('tpInput').value) || 0) / 100);
+    return {peak, now, d, r, sl, tp};
+  }
+
+  // ---- ① ----
+  function render1(){
+    let d = parseFloat($('ddInput').value);
+    if (isNaN(d) || d < 0) d = 0;
+    if (d > 99.99) d = 99.99;
+    const dec = d / 100;
+    const g = gainFromDd(dec);
+    $('needGain').textContent = fmt(g * 100, 2);
+    $('remain').textContent = fmt((1 - dec) * 100) + '%';
+    $('mult').textContent = fmt(1 + g) + ' 倍';
+    $('perPct').textContent = d > 0 ? fmt(g * 100 / d) + '%' : '+1.00%';
+
+    const range = $('ddRange');
+    range.value = Math.min(90, d);
+    const p = (Math.min(90, d) / 90) * 100;
+    range.style.background = `linear-gradient(90deg,var(--red) 0%,var(--red) ${p}%,#2a3242 ${p}%,#2a3242 100%)`;
+  }
+  $('ddInput').addEventListener('input', render1);
+  $('ddRange').addEventListener('input', () => {
+    $('ddInput').value = $('ddRange').value;
+    render1();
+  });
+
+  // ---- ② ----
+  function render2(){
+    const peak = parseFloat($('peakInput').value);
+    let now = parseFloat($('nowInput').value);
+    const rate = parseFloat($('rateInput').value);
+
+    if (isNaN(peak) || peak <= 0 || isNaN(now) || now < 0) {
+      $('dd2').textContent = '—'; $('gain2').textContent = '—'; $('years2').textContent = '—';
+      return;
+    }
+    if (now > peak) now = peak;
+    if (now <= 0) {
+      $('dd2').textContent = '100.00%';
+      $('gain2').textContent = '无法回本';
+      $('years2').textContent = '∞';
+      return;
+    }
+    const d = (peak - now) / peak;
+    const g = gainFromDd(d);
+    $('dd2').textContent = fmt(d * 100, 2) + '%';
+    $('gain2').textContent = fmt(g * 100, 2);
+    if (isNaN(rate) || rate <= 0) {
+      $('years2').textContent = '无法计算';
+    } else {
+      $('years2').textContent = fmt(tRepairA(d, rate/100)) + ' 年';
+    }
+  }
+  $('peakInput').addEventListener('input', render2);
+  $('nowInput').addEventListener('input', render2);
+  $('rateInput').addEventListener('input', render2);
+
+  // ---- ③ 参数联动 ----
+  function render3(){
+    const {d, sl, tp} = inputs();
+    $('ddRefB').textContent = fmt(d*100, 0) + '%';
+    $('slRefB').textContent = fmt(sl*100, 0) + '%';
+    $('startA').textContent = fmt((1-d)*100, 1) + '%';
+    $('startB').textContent = fmt((1-Math.min(d,sl))*100, 1) + '%';
+    $('tpAnch').textContent = fmt((1+tp)*100, 1) + '%';
+  }
+  ['slInput','tpInput'].forEach(id => $(id).addEventListener('input', renderAll));
+
+  // ---- ⑤ 回本时间 + 差值 ----
+  function render5(){
+    const {d, r, sl, tp} = inputs();
+
+    // 回本时间
+    const tA = tRepairA(d, r);
+    const tB = tRepairB(d, sl, r);
+    const tC = tRepairC(d, tp, r);
+
+    $('tA').textContent = tA > 0 ? fmt(tA) + ' 年' : '已回本';
+    $('tB').textContent = tB > 0 ? fmt(tB) + ' 年' : '已回本';
+    $('tC').textContent = tC > 0 ? fmt(tC) + ' 年' : (tA === 0 ? '— 无回撤 —' : '与 A 同步');
+
+    const save = tA - tB;
+    $('tSave').textContent = save > 0 ? fmt(save) + ' 年' : '0.00 年';
+
+    // 第 3 年的差值（或用 tA 当参考时更直观，但固定 3 年更稳定）
+    const tShow = Math.max(2, Math.min(5, tA > 0 ? tA + 1 : 3));
+    const vA = VA(tShow, d, r);
+    const vB = VB(tShow, d, sl, r);
+    const vC = VC(tShow, d, tp, r);
+
+    const diffBA = vB - vA;   // 绝对差值（峰值归一化单位）
+    const diffCA = vC - vA;
+
+    $('valBmA').textContent =
+      `第 ${tShow.toFixed(1)} 年时 B 比 A 多赚 ${fmt(diffBA*100, 2)}%`;
+    $('valCmA').textContent =
+      `第 ${tShow.toFixed(1)} 年时 C 比 A 多赚 ${fmt(diffCA*100, 2)}%`;
+  }
+
+  // ---- ⑦ 反向 ----
+  function render7(){
+    let g = parseFloat($('gainInput').value);
+    if (isNaN(g) || g < 0) g = 0;
+    $('backDd').textContent = fmt(ddFromGain(g / 100) * 100, 2);
+  }
+  $('gainInput').addEventListener('input', render7);
+
+  // ---- ⑥ 对照表 ----
+  function renderTable(){
+    const rows = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+    const curDd = parseFloat($('ddInput').value) || 0;
+    const diffLabel = g => g < 30 ? '可控' : g < 60 ? '吃力' : g < 100 ? '艰难' : g < 250 ? '极难' : '近乎不可能';
+    $('tableBody').innerHTML = rows.map(d => {
+      const g = gainFromDd(d / 100) * 100;
+      const hot = Math.abs(d - curDd) < 0.01 ? ' class="hot"' : '';
+      const bw = Math.min(100, (g / 900) * 100);
+      return `<tr${hot}>
+        <td>${d}%</td>
+        <td>${fmt(g,2)}%</td>
+        <td style="text-align:right"><span class="bar" style="width:${bw.toFixed(0)}px"></span>${diffLabel(g)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ---- ④ 时间维度净值曲线 ----
+  function renderChart(){
+    const {d, r, sl, tp} = inputs();
+
+    // 横轴：年数。取 max(tA*1.2, 3, 过 TP 时间*1.5)
+    const tA = tRepairA(d, r);
+    const tB = tRepairB(d, sl, r);
+    const tC = tRepairC(d, tp, r);
+    const tTP = r > 0 ? Math.log(Math.max((1+tp)/(1-d), 1)) / Math.log(1+r) : 0;
+    const tMax = Math.max(3, tA > 0 ? tA * 1.2 : 3, tB > 0 ? tB * 1.2 : 0, tTP * 1.5 + 1);
+
+    // 纵轴：归一化净值（峰值=1.0）
+    // 最低点在 t=0 时 A 的起点 = (1-d)，最高点取 max(VC(tMax), 1) * 1.1
+    const start = Math.min(1 - d, 1 - Math.min(d, sl));
+    let maxV = 1;
+    for (let t = 0; t <= tMax; t += 0.1) {
+      maxV = Math.max(maxV, VA(t, d, r), VB(t, d, sl, r), VC(t, d, tp, r));
+    }
+    maxV *= 1.08;
+
+    const W = 900, H = 320, PAD = {l:58, r:22, t:22, b:42};
+    const x = t => PAD.l + (t / tMax) * (W - PAD.l - PAD.r);
+    const y = v => PAD.t + (1 - Math.min(v, maxV) / maxV) * (H - PAD.t - PAD.b);
+
+    function curve(fn){
+      let p = '';
+      const step = tMax / 200;
+      for (let i = 0; i <= 200; i++) {
+        const t = i * step;
+        const v = fn(t, d, r, sl, tp);
+        p += (i ? 'L' : 'M') + x(t).toFixed(1) + ',' + y(v).toFixed(1) + ' ';
+      }
+      return p;
+    }
+
+    const pathA = curve((t, d, r) => VA(t, d, r));
+    const pathB = curve((t, d, r, sl) => VB(t, d, sl, r));
+    const pathC = curve((t, d, r, sl, tp) => VC(t, d, tp, r));
+
+    // 网格
+    let grid = '';
+    const xTicks = 6;
+    for (let i = 0; i <= xTicks; i++) {
+      const t = (i / xTicks) * tMax;
+      const gx = x(t);
+      grid += `<line x1="${gx.toFixed(1)}" y1="${PAD.t}" x2="${gx.toFixed(1)}" y2="${H - PAD.b}" stroke="#2a3242" stroke-width="1"/>`;
+      grid += `<text x="${gx.toFixed(1)}" y="${H - PAD.b + 18}" fill="#8a97ab" font-size="11" text-anchor="middle" font-family="monospace">${t.toFixed(1)}y</text>`;
+    }
+    const yVals = [];
+    const base = Math.max(0.5, start - 0.05);
+    for (let v = Math.ceil(base*10)/10; v <= maxV*10/10 + 0.001; v += 0.1) yVals.push(Math.round(v*10)/10);
+    yVals.forEach(v => {
+      const gy = y(v);
+      grid += `<line x1="${PAD.l}" y1="${gy.toFixed(1)}" x2="${W - PAD.r}" y2="${gy.toFixed(1)}" stroke="#2a3242" stroke-width="1" stroke-dasharray="3 4"/>`;
+      grid += `<text x="${PAD.l - 8}" y="${gy.toFixed(1)}" fill="#8a97ab" font-size="11" text-anchor="end" font-family="monospace">${(v*100).toFixed(0)}%</text>`;
+    });
+
+    // 100% 目标线
+    const targetY = y(1);
+    const targetLine = `<line x1="${PAD.l}" y1="${targetY.toFixed(1)}" x2="${W - PAD.r}" y2="${targetY.toFixed(1)}" stroke="#22d39a" stroke-width="1.3" stroke-dasharray="2 4"/>
+      <text x="${W - PAD.r - 4}" y="${targetY.toFixed(1) - 5}" fill="#22d39a" font-size="11" text-anchor="end" font-family="monospace">目标 100%</text>`;
+
+    // 起点标记
+    const startAx = x(0), startAy = y(1-d);
+    const startBy = y(1-Math.min(d,sl));
+    const startMarkers = `
+      <circle cx="${startAx}" cy="${startAy.toFixed(1)}" r="4" fill="#ff5c5c"/>
+      <text x="${startAx + 6}" y="${startAy.toFixed(1) - 6}" fill="#ff5c5c" font-size="10.5" font-family="monospace">A · 起点 ${((1-d)*100).toFixed(0)}%</text>
+      ${Math.abs(startAy - startBy) > 3 ? `<circle cx="${startAx}" cy="${startBy.toFixed(1)}" r="4" fill="#4fb6ff"/><text x="${startAx + 6}" y="${startBy.toFixed(1) + 12}" fill="#4fb6ff" font-size="10.5" font-family="monospace">B · 起点 ${((1-Math.min(d,sl))*100).toFixed(0)}%</text>` : ''}
+    `;
+
+    // 回本时间交点
+    const repairMarkers = [];
+    if (tA > 0 && tA <= tMax) {
+      const tx = x(tA), ty = y(1);
+      repairMarkers.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="4" fill="#ff5c5c"/><text x="${tx.toFixed(1)}" y="${ty.toFixed(1) + 14}" fill="#ff5c5c" font-size="10.5" text-anchor="middle" font-family="monospace">A 回本 ${tA.toFixed(1)}y</text>`);
+    }
+    if (tB > 0 && tB <= tMax) {
+      const tx = x(tB), ty = y(1);
+      repairMarkers.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="4" fill="#4fb6ff"/><text x="${tx.toFixed(1)}" y="${ty.toFixed(1) + 26}" fill="#4fb6ff" font-size="10.5" text-anchor="middle" font-family="monospace">B 回本 ${tB.toFixed(1)}y</text>`);
+    }
+    if (tC > 0 && tC <= tMax) {
+      const tx = x(tC), ty = y(1);
+      repairMarkers.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="4" fill="#ff7ad1"/><text x="${tx.toFixed(1)}" y="${ty.toFixed(1) + 38}" fill="#ff7ad1" font-size="10.5" text-anchor="middle" font-family="monospace">C 回本 ${tC.toFixed(1)}y</text>`);
+    }
+
+    $('chartV').innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="三条净值对比曲线">
+      ${grid}
+      ${targetLine}
+      <path d="${pathA}" fill="none" stroke="#ff5c5c" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="${pathB}" fill="none" stroke="#4fb6ff" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="${pathC}" fill="none" stroke="#ff7ad1" stroke-width="2.2" stroke-linejoin="round"/>
+      ${startMarkers}
+      ${repairMarkers.join('\n      ')}
+      <text x="${PAD.l - 8}" y="${PAD.t - 6}" fill="#8a97ab" font-size="11" font-family="monospace">净值（峰值 = 100%）</text>
+      <text x="${W - PAD.r}" y="${H - 6}" fill="#8a97ab" font-size="11" text-anchor="end">年份 →</text>
+    </svg>`;
+
+    $('chartTip').textContent = `当前 d=${fmt(d*100,1)}%, SL=${fmt(sl*100,1)}%, TP=${fmt(tp*100,1)}%, r=${fmt(r*100,0)}%`;
+  }
+
+  // ---- 全量刷新 ----
+  function renderAll(){
+    render1();
+    render2();
+    render3();
+    renderChart();
+    render5();
+    render7();
+    renderTable();
+  }
+
+  // 联动 ddInput 同步到 peak/now（仅当 peak/now 未被手动改过）
+  function syncDdToPeakNow(){
+    const dd = parseFloat($('ddInput').value);
+    const peak = parseFloat($('peakInput').value);
+    if (peak > 0 && !$('peakInput').dataset.touched && !$('nowInput').dataset.touched) {
+      $('nowInput').value = Math.round(peak * (1 - dd/100));
+    }
+  }
+  $('ddInput').addEventListener('input', () => { syncDdToPeakNow(); renderAll(); });
+  $('ddRange').addEventListener('input', () => { $('ddInput').value = $('ddRange').value; syncDdToPeakNow(); renderAll(); });
+
+  ['peakInput','nowInput','rateInput'].forEach(id => $(id).addEventListener('input', renderAll));
+  $('peakInput').addEventListener('input', e => e.target.dataset.touched = '1');
+  $('nowInput').addEventListener('input', e => e.target.dataset.touched = '1');
+
+  // 首次渲染
+  renderAll();
+})();
+</script>
+</body>
+</html>
